@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Онлайн Игра Мафия (Веб-приложение)</title>
+    
+    <!-- Скрипт для интеграции с Telegram Web App -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    
+    <!-- Подключение Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Подключение библиотеки иконок Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Подключение шрифта Roboto -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --main-red: #d9534f; --dark-red: #c9302c; --background-dark: #3a3535;
+            --card-bg: rgba(245, 245, 220, 0.9); --text-dark: #333333; --text-light: #f5f5f5;
+        }
+        body {
+            font-family: 'Roboto', sans-serif; background-color: var(--background-dark);
+            background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.7)), url('https://www.transparenttextures.com/patterns/dark-suit.png');
+            color: var(--text-light); overflow: hidden; height: 100vh;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .btn-red { background-color: var(--main-red); color: var(--text-light); transition: background-color 0.2s, opacity 0.2s; }
+        .btn-red:hover:not(:disabled) { background-color: var(--dark-red); }
+        .btn-red:disabled { opacity: 0.6; cursor: not-allowed; }
+        .form-input { background-color: #e0e0e0; border: 1px solid #ccc; color: var(--text-dark); border-radius: 4px; }
+        .form-input:focus { outline: none; box-shadow: 0 0 0 2px var(--main-red); }
+        .modal-backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.85); display: none; justify-content: center; align-items: center; z-index: 50; }
+        .modal-backdrop.active { display: flex; }
+        .modal-content { background-color: #f5f5dc; width: 90%; max-width: 500px; border-radius: 0.5rem; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); overflow: hidden; animation: slide-in 0.3s ease-out; }
+        @keyframes slide-in { from { transform: translateY(-30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .modal-header { background-color: var(--main-red); color: var(--text-light); padding: 0.75rem 1.25rem; }
+        .modal-body { padding: 1.5rem 1.25rem; color: var(--text-dark); max-height: 70vh; overflow-y: auto; }
+        .modal-button { width: 100%; background-color: var(--main-red); color: var(--text-light); border: none; padding: 0.75rem; font-weight: bold; cursor: pointer; transition: background-color 0.2s; }
+        .modal-button:hover { background-color: var(--dark-red); }
+        .player-card { transition: all 0.2s ease-in-out; cursor: pointer; border: 2px solid transparent; position: relative; background: rgba(255, 255, 255, 0.1); border-radius: 8px; }
+        .player-card.selectable:hover { border-color: rgba(217, 83, 79, 0.5); }
+        .player-card.selected { transform: scale(1.05); border-color: var(--main-red); box-shadow: 0 0 10px rgba(217, 83, 79, 0.7); }
+        .player-card.dead { filter: grayscale(1); opacity: 0.6; cursor: default; }
+        .player-card.dead .player-name { text-decoration: line-through; }
+        .player-avatar { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 3px solid #ccc; background-color: #fff; }
+        .role-icon-overlay { position: absolute; bottom: -5px; right: -5px; width: 28px; height: 28px; background-color: #f5f5dc; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 5px rgba(0,0,0,0.3); border: 2px solid #fff; }
+        .role-icon-small { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; background-color: #eee; border: 1px solid #ccc; font-size: 0.8rem; }
+        .header { background-color: rgba(0,0,0,0.2); box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2); flex-shrink: 0; }
+        .room-card { background-color: var(--card-bg); border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.2); box-shadow: 0 4px 8px rgba(0,0,0,0.3); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); }
+        .number-input-container button { width: 30px; height: 30px; border: 1px solid #ccc; background-color: #e0e0e0; }
+        .number-input-container input { width: 40px; height: 30px; text-align: center; border: 1px solid #ccc; margin: 0; -moz-appearance: textfield; -webkit-appearance: none; appearance: none; }
+        .chat-toggle button.active { background-color: var(--main-red); }
+        .stat-item { display: flex; justify-content: space-between; padding: 0.25rem 0; border-bottom: 1px solid rgba(0,0,0,0.1); }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #555; }
+        ::-webkit-scrollbar-thumb { background: var(--main-red); border-radius: 3px; }
+    </style>
+</head>
+<body class="text-white">
+
+    <main id="app-container" class="h-full w-full">
+
+        <!-- Экран входа (для обычного браузера) -->
+        <div id="login-screen" class="modal-backdrop active">
+            <div class="modal-content text-center">
+                <div class="modal-header"><h2 class="text-xl font-bold">Мафия Онлайн</h2></div>
+                <div class="modal-body">
+                    <p class="mb-4">Представьтесь, чтобы войти в игру</p>
+                    <input type="text" id="player-name-input" placeholder="Введите ваше имя" class="w-full p-3 form-input">
+                </div>
+                <button id="enter-lobby-btn" class="modal-button">ВОЙТИ В ЛОББИ</button>
+            </div>
+        </div>
+
+        <!-- Экран списка комнат -->
+        <section id="rooms-screen" class="h-full w-full flex-col hidden">
+            <header class="header p-3 flex justify-between items-center">
+                <h1 class="text-xl font-bold">Игровые комнаты</h1>
+                <button id="user-info-button" class="text-sm font-semibold p-2 rounded-md hover:bg-white/10 transition"></button>
+            </header>
+            <div id="rooms-list" class="flex-grow p-4 overflow-y-auto space-y-4"></div>
+            <footer class="p-4 flex-shrink-0 bg-black bg-opacity-20">
+                <button id="show-create-room-modal-btn" class="w-full btn-red font-bold py-3 px-4 rounded-md transition text-lg shadow-lg">
+                    <i class="fas fa-plus mr-2"></i>Создать новую комнату
+                </button>
+            </footer>
+        </section>
+        
+        <!-- Модальное окно создания комнаты -->
+        <div id="create-room-modal" class="modal-backdrop">
+            <div class="modal-content">
+                <div class="modal-header"><h2 class="text-xl font-bold">Создание комнаты</h2></div>
+                <div class="modal-body space-y-4">
+                    <div>
+                        <label for="new-room-name" class="block mb-1 font-semibold">Название комнаты</label>
+                        <input type="text" id="new-room-name" placeholder="Например, 'Только профи'" class="w-full p-2 form-input">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="min-players" class="block mb-1 font-semibold">Мин. игроков</label>
+                            <input type="number" id="min-players" value="4" min="4" max="16" class="w-full p-2 form-input">
+                        </div>
+                        <div>
+                            <label for="max-players" class="block mb-1 font-semibold">Макс. игроков</label>
+                            <input type="number" id="max-players" value="10" min="4" max="16" class="w-full p-2 form-input">
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold mb-2">Настройка ролей</h3>
+                        <div id="roles-config-list" class="space-y-2"></div>
+                    </div>
+                </div>
+                <div class="flex">
+                    <button id="cancel-create-room-btn" class="modal-button w-1/2 bg-gray-500 hover:bg-gray-600">Отмена</button>
+                    <button id="confirm-create-room-btn" class="modal-button w-1/2">Создать</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Основной экран игры -->
+        <section id="game-screen" class="h-full w-full flex flex-col md:flex-row hidden">
+            <aside class="w-full md:w-1/4 bg-black bg-opacity-20 flex flex-col p-2">
+                <header class="flex justify-between items-center mb-2">
+                    <h2 id="room-name" class="text-lg font-bold"></h2>
+                    <div id="player-count" class="text-sm"></div>
+                </header>
+                <div id="players-list" class="flex-grow overflow-y-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-1 gap-2"></div>
+                <button id="back-to-rooms-btn" class="w-full mt-2 btn-red bg-gray-600 hover:bg-gray-700 font-bold py-2 px-4 rounded-md transition text-sm">
+                    <i class="fas fa-arrow-left mr-1"></i>Покинуть комнату
+                </button>
+            </aside>
+            <div class="flex-grow flex flex-col p-2 md:p-4 h-full">
+                <div id="game-state-panel" class="bg-black bg-opacity-30 p-3 rounded-lg shadow-lg mb-4 text-center">
+                    <div class="flex justify-between items-center mb-2">
+                         <p id="game-state-description" class="text-lg font-semibold"></p>
+                         <div id="game-timer" class="text-xl font-bold text-red-400"></div>
+                    </div>
+                    <div id="role-panel" class="hidden p-2 bg-yellow-900 bg-opacity-50 rounded">
+                        <p id="player-role-display"></p>
+                    </div>
+                </div>
+                <div id="action-panel" class="text-center mb-4">
+                     <button id="action-button" class="hidden btn-red font-bold py-3 px-6 rounded-lg shadow-lg transition text-lg"></button>
+                     <button id="start-game-btn" class="hidden btn-red font-bold py-3 px-6 rounded-lg shadow-lg transition text-lg">Начать игру</button>
+                </div>
+                <div class="flex-grow bg-black bg-opacity-25 rounded-lg flex flex-col p-2 overflow-hidden">
+                    <div id="chat-toggle" class="hidden flex-shrink-0 mb-2 chat-toggle">
+                        <button id="chat-toggle-general" class="flex-1 py-1 px-2 text-sm bg-gray-700 rounded-l-md">Общий</button>
+                        <button id="chat-toggle-mafia" class="flex-1 py-1 px-2 text-sm bg-gray-700 rounded-r-md">Мафия</button>
+                    </div>
+                    <div id="chat-messages" class="flex-grow overflow-y-auto mb-2 pr-2"></div>
+                    <div id="mafia-chat-messages" class="hidden flex-grow overflow-y-auto mb-2 pr-2"></div>
+                    <div class="flex">
+                        <input type="text" id="chat-input" class="flex-grow p-2 form-input" placeholder="Введите сообщение...">
+                        <button id="send-chat-btn" class="btn-red px-4 ml-2 rounded-md" aria-label="Отправить сообщение"><i class="fas fa-paper-plane"></i></button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Модальное окно конца игры -->
+        <div id="end-game-modal" class="modal-backdrop">
+            <div class="modal-content text-center">
+                <div class="modal-header"><h2 class="text-xl font-bold">Игра Окончена</h2></div>
+                <div class="modal-body">
+                    <h3 id="winner-announcement" class="text-2xl font-bold mb-4"></h3>
+                    <p class="mb-3">Состав игроков:</p>
+                    <div id="final-roles-list" class="text-left space-y-1"></div>
+                </div>
+                <button id="return-to-lobby-btn" class="modal-button">Вернуться в лобби</button>
+            </div>
+        </div>
+
+        <!-- Модальное окно профиля -->
+        <div id="profile-modal" class="modal-backdrop">
+            <div class="modal-content">
+                <div class="modal-header flex justify-between items-center">
+                    <h2 class="text-xl font-bold">Профиль игрока</h2>
+                    <button id="close-profile-modal-btn" class="text-white text-2xl">&times;</button>
+                </div>
+                <div id="profile-modal-body" class="modal-body">
+                    <!-- Содержимое профиля будет загружено здесь -->
+                </div>
+                <div id="profile-modal-footer" class="flex">
+                    <!-- Кнопки футера будут здесь -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Модальное окно редактирования профиля -->
+        <div id="edit-profile-modal" class="modal-backdrop">
+            <div class="modal-content">
+                <div class="modal-header"><h2 class="text-xl font-bold">Редактировать профиль</h2></div>
+                <div class="modal-body space-y-4">
+                    <div>
+                        <label for="edit-player-name-input" class="block mb-1 font-semibold">Имя игрока</label>
+                        <input type="text" id="edit-player-name-input" class="w-full p-2 form-input">
+                    </div>
+                     <p class="text-sm text-gray-600">Аватар генерируется на основе вашего имени. Изменение имени изменит и аватар.</p>
+                </div>
+                <div class="flex">
+                    <button id="cancel-edit-profile-btn" class="modal-button w-1/2 bg-gray-500 hover:bg-gray-600">Отмена</button>
+                    <button id="save-profile-btn" class="modal-button w-1/2">Сохранить</button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+    
+    <div id="toast-message" class="hidden fixed bottom-5 right-5 text-white py-2 px-4 rounded-lg shadow-lg z-50 transition-opacity duration-300"></div>
+
+    <script type="module">
+        // ===================================================================================
+        // --- Локальная БД и API ---
+        // ===================================================================================
+        const LocalDB = {
+            _data: { games: {}, users: {} },
+            listeners: {},
+
+            _getPathParts(path) {
+                const parts = path.split('/');
+                const collection = parts[0];
+                const docId = parts.length > 1 ? parts[1] : null;
+                if (!this._data[collection]) throw new Error(`Коллекция не найдена: ${collection}`);
+                return { collection, docId };
+            },
+            
+            async getDoc(path) {
+                const { collection, docId } = this._getPathParts(path);
+                const data = this._data[collection][docId];
+                return {
+                    exists: () => !!data,
+                    data: () => data ? JSON.parse(JSON.stringify(data)) : null,
+                    id: docId
+                };
+            },
+            
+            _notify(path) {
+                if (this.listeners[path]) {
+                    const { collection, docId } = this._getPathParts(path);
+                    const data = this._data[collection][docId];
+                    const snapshot = { exists: () => !!data, data: () => data ? JSON.parse(JSON.stringify(data)) : null };
+                    this.listeners[path].forEach(cb => cb(snapshot));
+                }
+                const { collection } = this._getPathParts(path);
+                if (this.listeners[collection]) {
+                    const collectionData = this._data[collection];
+                    const snapshot = { docs: Object.entries(collectionData).map(([id, docData]) => ({ id, data: () => JSON.parse(JSON.stringify(docData)) })) };
+                    this.listeners[collection].forEach(cb => cb(snapshot));
+                }
+            },
+
+            onSnapshot(path, callback) {
+                if (!this.listeners[path]) this.listeners[path] = [];
+                this.listeners[path].push(callback);
+                
+                const parts = path.split('/');
+                if (parts.length === 1) { // Collection
+                    const collectionData = this._data[path];
+                     const snapshot = { docs: Object.entries(collectionData).map(([id, docData]) => ({ id, data: () => JSON.parse(JSON.stringify(docData)) })) };
+                    callback(snapshot);
+                } else { // Document
+                    const { collection, docId } = this._getPathParts(path);
+                    const data = this._data[collection][docId];
+                    callback({ exists: () => !!data, data: () => data ? JSON.parse(JSON.stringify(data)) : null });
+                }
+
+                return () => { this.listeners[path] = this.listeners[path].filter(cb => cb !== callback); };
+            },
+
+            async setDoc(path, data) {
+                const { collection, docId } = this._getPathParts(path);
+                this._data[collection][docId] = JSON.parse(JSON.stringify(data));
+                this._notify(path);
+            },
+            
+            async updateDoc(path, updates) {
+                const { collection, docId } = this._getPathParts(path);
+                if (!this._data[collection][docId]) return;
+                Object.assign(this._data[collection][docId], JSON.parse(JSON.stringify(updates)));
+                this._notify(path);
+            },
+
+            async runTransaction(path, updateFunction) {
+                 const { collection, docId } = this._getPathParts(path);
+                 const docCopy = this._data[collection][docId] ? JSON.parse(JSON.stringify(this._data[collection][docId])) : null;
+                
+                let wasDeleted = false;
+                const transaction = {
+                    get: () => ({ exists: () => !!docCopy, data: () => docCopy }),
+                    update: (updates) => { Object.assign(docCopy, updates); },
+                    set: (newData) => { Object.assign(docCopy, newData); },
+                    delete: () => { wasDeleted = true; }
+                };
+                await updateFunction(transaction);
+
+                if (wasDeleted) delete this._data[collection][docId];
+                else this._data[collection][docId] = docCopy;
+                this._notify(path);
+            }
+        };
+
+        // --- КОНФИГУРАЦИЯ И КОНСТАНТЫ ---
+        const ROLES = {
+            mafia: { name: 'Мафия', icon: `<i class="fas fa-user-secret text-red-700"></i>`, description: "Ночью вы выбираете, кого устранить.", team: 'mafia' },
+            doctor: { name: 'Доктор', icon: `<i class="fas fa-plus-square text-blue-600"></i>`, description: "Ночью вы выбираете, кого спасти от смерти.", team: 'civilian' },
+            commissar: { name: 'Комиссар', icon: `<i class="fas fa-shield-alt text-yellow-500"></i>`, description: "Ночью вы можете проверить роль одного из игроков.", team: 'civilian' },
+            maniac: { name: 'Маньяк', icon: `<i class="fas fa-skull-crossbones text-orange-500"></i>`, description: "Каждую ночь вы убиваете одного игрока. Ваша цель — остаться последним выжившим.", team: 'maniac' },
+            courtesan: { name: 'Путана', icon: `<i class="fas fa-heart-broken text-pink-500"></i>`, description: "Ночью вы 'посещаете' одного игрока, блокируя его действие. Вы не можете выбирать одного и того же игрока две ночи подряд.", team: 'civilian' },
+            civilian: { name: 'Мирный житель', icon: `<i class="fas fa-user text-green-600"></i>`, description: "Ваша задача — вычислить и казнить всю мафию и маньяка.", team: 'civilian' }
+        };
+        const GAME_STATES = { LOBBY: 'lobby', NIGHT: 'night', DAY: 'day', VOTING: 'voting', FINISHED: 'finished' };
+        const DAY_TIMER_DURATION = 45;
+
+        // --- ГЛОБАЛЬНОЕ СОСТОЯНИЕ ПРИЛОЖЕНИЯ ---
+        const AppState = {
+            userId: null, gameId: null, playerName: '', userProfile: null, gameState: {}, selectedPlayerId: null,
+            unsubscribeGame: null, unsubscribeRooms: null, dayTimerInterval: null, isAuthReady: false,
+            isMafiaChatActive: false, gameLoopInterval: null, previousScreen: 'rooms',
+        };
+        
+        // --- DOM ЭЛЕМЕНТЫ ---
+        const DOM = {
+            screens: { login: document.getElementById('login-screen'), rooms: document.getElementById('rooms-screen'), game: document.getElementById('game-screen'), createRoomModal: document.getElementById('create-room-modal'), endGameModal: document.getElementById('end-game-modal'), profileModal: document.getElementById('profile-modal'), editProfileModal: document.getElementById('edit-profile-modal') },
+            userInfoButton: document.getElementById('user-info-button'), enterLobbyBtn: document.getElementById('enter-lobby-btn'), playerNameInput: document.getElementById('player-name-input'),
+            roomsList: document.getElementById('rooms-list'), backToRoomsBtn: document.getElementById('back-to-rooms-btn'), playersList: document.getElementById('players-list'),
+            playerCount: document.getElementById('player-count'), chatMessages: document.getElementById('chat-messages'), mafiaChatMessages: document.getElementById('mafia-chat-messages'),
+            chatInput: document.getElementById('chat-input'), sendChatBtn: document.getElementById('send-chat-btn'), startGameBtn: document.getElementById('start-game-btn'),
+            gameStateDescription: document.getElementById('game-state-description'), gameTimer: document.getElementById('game-timer'), rolePanel: document.getElementById('role-panel'),
+            playerRoleDisplay: document.getElementById('player-role-display'), actionButton: document.getElementById('action-button'), roomName: document.getElementById('room-name'),
+            toast: document.getElementById('toast-message'), showCreateRoomModalBtn: document.getElementById('show-create-room-modal-btn'),
+            cancelCreateRoomBtn: document.getElementById('cancel-create-room-btn'), confirmCreateRoomBtn: document.getElementById('confirm-create-room-btn'),
+            newRoomNameInput: document.getElementById('new-room-name'), minPlayersInput: document.getElementById('min-players'), maxPlayersInput: document.getElementById('max-players'),
+            rolesConfigList: document.getElementById('roles-config-list'), winnerAnnouncement: document.getElementById('winner-announcement'), finalRolesList: document.getElementById('final-roles-list'),
+            returnToLobbyBtn: document.getElementById('return-to-lobby-btn'), chatToggle: document.getElementById('chat-toggle'),
+            chatToggleGeneral: document.getElementById('chat-toggle-general'), chatToggleMafia: document.getElementById('chat-toggle-mafia'),
+            profileModalBody: document.getElementById('profile-modal-body'), profileModalFooter: document.getElementById('profile-modal-footer'), closeProfileModalBtn: document.getElementById('close-profile-modal-btn'),
+            editPlayerNameInput: document.getElementById('edit-player-name-input'), cancelEditProfileBtn: document.getElementById('cancel-edit-profile-btn'), saveProfileBtn: document.getElementById('save-profile-btn'),
+        };
+
+        // --- УПРАВЛЕНИЕ UI ---
+        function showScreen(screenName) {
+            Object.values(DOM.screens).forEach(screen => {
+                screen.classList.add('hidden');
+                if (screen.classList.contains('modal-backdrop')) screen.classList.remove('active');
+            });
+            const screenToShow = DOM.screens[screenName];
+            if (screenToShow) {
+                screenToShow.classList.remove('hidden');
+                if (screenToShow.classList.contains('modal-backdrop')) screenToShow.classList.add('active');
+            }
+        }
+        function showToast(message, isError = false) {
+            DOM.toast.textContent = message;
+            DOM.toast.className = `fixed bottom-5 right-5 text-white py-2 px-4 rounded-lg shadow-lg z-50 transition-opacity duration-300 ${isError ? 'bg-red-600' : 'bg-green-600'}`;
+            DOM.toast.classList.remove('hidden');
+            setTimeout(() => { DOM.toast.classList.add('hidden'); }, 3000);
+        }
+        function renderPlayerList(players, hostId, me, gameState) {
+            DOM.playersList.innerHTML = '';
+            const canAct = !DOM.actionButton.classList.contains('hidden');
+            Object.entries(players).sort((a,b) => a[1].name.localeCompare(b[1].name)).forEach(([pid, player]) => {
+                const card = document.createElement('div');
+                card.dataset.pid = pid;
+                let roleIconOverlay = '';
+                if (me.role === 'commissar' && gameState.commissarCheck && gameState.commissarCheck[pid]) {
+                    const checkedRoleKey = gameState.commissarCheck[pid];
+                    const checkedRole = ROLES[checkedRoleKey] || { name: 'Неизвестно', icon: ''};
+                    roleIconOverlay = `<div class="role-icon-overlay" title="${checkedRole.name}">${checkedRole.icon}</div>`;
+                }
+                const isDead = player.status === 'dead';
+                const isSelectableForAction = canAct && !isDead;
+                card.className = `player-card p-2 flex flex-col items-center text-center ${isDead ? 'dead' : ''} ${isSelectableForAction ? 'selectable' : ''}`;
+                card.innerHTML = `<div class="relative"><img src="${player.avatar}" alt="${player.name}" class="player-avatar"></div><span class="player-name mt-1 text-sm font-medium">${player.name} ${pid === hostId ? '<i class="fas fa-crown text-yellow-400" title="Хост"></i>' : ''}</span><span class="text-xs opacity-70">${isDead ? 'Выбыл' : 'В игре'}</span>`;
+                DOM.playersList.appendChild(card);
+            });
+        }
+        function renderChat(chat, container) {
+            container.innerHTML = '';
+            (chat || []).forEach(msg => {
+                const msgEl = document.createElement('div');
+                msgEl.className = 'mb-2 break-words';
+                msgEl.innerHTML = `<span class="font-bold ${msg.senderName === 'Система' ? 'text-red-400' : 'text-blue-300'}">${msg.senderName}:</span> <span class="text-white">${msg.message}</span>`;
+                container.appendChild(msgEl);
+            });
+            container.scrollTop = container.scrollHeight;
+        }
+        async function showProfileModal(userId) {
+            const activeScreen = Object.entries(DOM.screens).find(([key, screen]) =>
+                !screen.classList.contains('hidden') && (key === 'rooms' || key === 'game')
+            );
+            AppState.previousScreen = activeScreen ? activeScreen[0] : 'rooms';
+
+            const userDoc = await LocalDB.getDoc(`users/${userId}`);
+            if (!userDoc.exists()) {
+                showToast("Профиль игрока не найден.", true);
+                return;
+            }
+            const profile = userDoc.data();
+            const stats = profile.stats || {};
+            const isMyProfile = userId === AppState.userId;
+
+            DOM.profileModalBody.innerHTML = `
+                <div class="flex flex-col items-center text-center">
+                    <img src="${profile.avatar}" alt="${profile.name}" class="w-24 h-24 rounded-full border-4 border-gray-300 shadow-lg">
+                    <h3 class="text-2xl font-bold mt-3">${profile.name}</h3>
+                </div>
+                <div class="mt-4">
+                    <h4 class="font-bold text-lg border-b-2 border-red-500 pb-1 mb-2">Статистика</h4>
+                    <div class="space-y-1 text-sm">
+                        <div class="stat-item"><span>Сыграно игр:</span><span class="font-semibold">${stats.gamesPlayed || 0}</span></div>
+                        <div class="stat-item"><span>Побед за Мафию:</span><span class="font-semibold">${stats.winsAsMafia || 0}</span></div>
+                        <div class="stat-item"><span>Побед за Мирных:</span><span class="font-semibold">${stats.winsAsCivilian || 0}</span></div>
+                        <div class="stat-item"><span>Побед за Маньяка:</span><span class="font-semibold">${stats.winsAsManiac || 0}</span></div>
+                        <div class="stat-item"><span>Был Мафией:</span><span class="font-semibold">${stats.playedAsMafia || 0} раз</span></div>
+                        <div class="stat-item"><span>Был Доктором:</span><span class="font-semibold">${stats.playedAsDoctor || 0} раз</span></div>
+                        <div class="stat-item"><span>Был Комиссаром:</span><span class="font-semibold">${stats.playedAsCommissar || 0} раз</span></div>
+                        <div class="stat-item"><span>Был Маньяком:</span><span class="font-semibold">${stats.playedAsManiac || 0} раз</span></div>
+                        <div class="stat-item"><span>Был Путаной:</span><span class="font-semibold">${stats.playedAsCourtesan || 0} раз</span></div>
+                    </div>
+                </div>
+            `;
+            
+            DOM.profileModalFooter.innerHTML = isMyProfile 
+                ? `<button id="edit-profile-btn" class="modal-button w-1/2 bg-blue-500 hover:bg-blue-600">Редактировать</button><button id="close-profile-btn" class="modal-button w-1/2">Закрыть</button>`
+                : `<button id="close-profile-btn" class="modal-button w-full">Закрыть</button>`;
+
+            document.getElementById('close-profile-btn').addEventListener('click', () => showScreen(AppState.previousScreen));
+            if (isMyProfile) {
+                document.getElementById('edit-profile-btn').addEventListener('click', () => {
+                    DOM.editPlayerNameInput.value = AppState.playerName;
+                    showScreen('editProfileModal');
+                });
+            }
+            showScreen('profileModal');
+        }
+        function updateUI(state) {
+            if (!state || !AppState.userId) return;
+            AppState.gameState = state;
+            const me = state.players[AppState.userId];
+
+            if (!me) {
+                showToast("Вы были отключены от игры.", true);
+                handleLeaveGame();
+                return;
+            }
+            renderPlayerList(state.players, state.hostId, me, state);
+            
+            const isNight = state.state === GAME_STATES.NIGHT;
+            const isMafia = me.role === 'mafia';
+            DOM.chatToggle.classList.toggle('hidden', !(isNight && isMafia));
+            
+            if (AppState.isMafiaChatActive) {
+                renderChat(state.mafiaChat, DOM.mafiaChatMessages);
+                DOM.chatMessages.classList.add('hidden');
+                DOM.mafiaChatMessages.classList.remove('hidden');
+            } else {
+                renderChat(state.chat, DOM.chatMessages);
+                DOM.chatMessages.classList.remove('hidden');
+                DOM.mafiaChatMessages.classList.add('hidden');
+            }
+            DOM.playerCount.textContent = `${Object.keys(state.players).length}/${state.config.maxPlayers}`;
+            DOM.roomName.textContent = state.name;
+
+            if (me.role) {
+                DOM.rolePanel.classList.remove('hidden');
+                DOM.playerRoleDisplay.innerHTML = `Ваша роль: <span class="font-bold">${ROLES[me.role].name}</span> ${ROLES[me.role].icon}. ${ROLES[me.role].description}`;
+            } else {
+                DOM.rolePanel.classList.add('hidden');
+            }
+            updateGameStateDisplay(state);
+            updateActionPanel(state, me);
+
+            if (state.state === GAME_STATES.FINISHED && state.winner) {
+                showEndGameModal(state);
+            }
+        }
+        function updateGameStateDisplay(state) {
+            let description = "Ожидание...";
+            switch(state.state) {
+                case GAME_STATES.LOBBY: description = `Ожидание игроков... (Мин: ${state.config.minPlayers})`; break;
+                case GAME_STATES.NIGHT: description = 'Ночь. Активные роли делают свой ход.'; break;
+                case GAME_STATES.DAY: description = 'День. Идет обсуждение...'; break;
+                case GAME_STATES.VOTING: description = 'Идет голосование. Выберите, кого казнить.'; break;
+                case GAME_STATES.FINISHED: description = 'Игра окончена.'; break;
+            }
+            DOM.gameStateDescription.textContent = description;
+        }
+        function updateActionPanel(state, me) {
+            DOM.startGameBtn.classList.add('hidden');
+            DOM.actionButton.classList.add('hidden');
+            AppState.selectedPlayerId = null;
+            document.querySelectorAll('.player-card.selected').forEach(c => c.classList.remove('selected'));
+
+            if (state.state === GAME_STATES.LOBBY) {
+                if (state.hostId === AppState.userId && Object.keys(state.players).length >= state.config.minPlayers) {
+                    DOM.startGameBtn.classList.remove('hidden');
+                }
+            } else if (me && me.status === 'alive') {
+                const isNight = state.state === GAME_STATES.NIGHT;
+                const hasVoted = state.votes && state.votes[AppState.userId];
+                const nightActionDone = state.nightActions && state.nightActions[AppState.userId];
+                const activeRoles = ['mafia', 'doctor', 'commissar', 'maniac', 'courtesan'];
+                
+                if (isNight && !nightActionDone && activeRoles.includes(me.role)) {
+                     DOM.actionButton.textContent = 'Подтвердить выбор';
+                     DOM.actionButton.classList.remove('hidden');
+                } else if (state.state === GAME_STATES.VOTING && !hasVoted) {
+                    DOM.actionButton.textContent = 'Голосовать за казнь';
+                    DOM.actionButton.classList.remove('hidden');
+                }
+            }
+        }
+        function initializeCreateRoomModal() {
+            DOM.rolesConfigList.innerHTML = '';
+            Object.entries(ROLES).forEach(([key, role]) => {
+                if (key === 'civilian') return;
+                const el = document.createElement('div');
+                el.className = 'flex justify-between items-center';
+                el.innerHTML = `<div class="flex items-center gap-2"><span class="role-icon-small">${role.icon}</span><span>${role.name}</span></div><div class="number-input-container flex items-center"><button data-role="${key}" data-op="-1" class="role-count-btn rounded-l">-</button><input type="number" id="role-count-${key}" value="${key === 'mafia' ? 1 : 0}" min="0" max="5" class="form-input" readonly><button data-role="${key}" data-op="1" class="role-count-btn rounded-r">+</button></div>`;
+                DOM.rolesConfigList.appendChild(el);
+            });
+        }
+        function showEndGameModal(state) {
+            if (AppState.dayTimerInterval) clearInterval(AppState.dayTimerInterval);
+            DOM.winnerAnnouncement.textContent = `Победила команда: ${state.winner}!`;
+            DOM.finalRolesList.innerHTML = Object.values(state.players).map(p => `<div><span class="font-bold">${p.name}:</span> ${ROLES[p.role].name} ${ROLES[p.role].icon}</div>`).join('');
+            showScreen('endGameModal');
+        }
+
+        // --- Взаимодействие с API (локальным) ---
+        async function attachGameListener(gameId) {
+            if (AppState.unsubscribeGame) AppState.unsubscribeGame();
+            AppState.unsubscribeGame = LocalDB.onSnapshot(`games/${gameId}`, (doc) => {
+                if (doc.exists()) {
+                    updateUI(doc.data());
+                } else {
+                    showToast("Комната была расформирована.", true);
+                    handleLeaveGame();
+                }
+            });
+            if (AppState.gameLoopInterval) clearInterval(AppState.gameLoopInterval);
+            AppState.gameLoopInterval = setInterval(gameLoop, 1000);
+        }
+        async function fetchAndDisplayRooms() {
+            if (AppState.unsubscribeRooms) AppState.unsubscribeRooms();
+            AppState.unsubscribeRooms = LocalDB.onSnapshot('games', (snapshot) => {
+                DOM.roomsList.innerHTML = snapshot.docs.length === 0 ? `<p class="text-center text-gray-400 mt-10">Нет доступных комнат. Создайте свою!</p>` : '';
+                snapshot.docs.sort((a, b) => (b.data().createdAt || 0) - (a.data().createdAt || 0)).forEach(doc => {
+                    const game = doc.data();
+                    const playerCount = Object.keys(game.players || {}).length;
+                    const config = game.config || {};
+                    const rolesInGame = config.roles ? Object.entries(config.roles).filter(([_, count]) => count > 0) : [];
+                    const roomCard = document.createElement('div');
+                    roomCard.className = 'room-card p-4 text-black space-y-2';
+                    roomCard.innerHTML = `<div class="flex justify-between items-start"><div><h3 class="font-bold text-lg">${game.name}</h3><p class="text-sm opacity-80">Игроки: ${playerCount} / ${config.maxPlayers || 10}</p></div><span class="text-sm font-semibold py-1 px-2 rounded ${game.state === GAME_STATES.LOBBY ? 'bg-green-200 text-green-800' : 'bg-yellow-200 text-yellow-800'}">${game.state === GAME_STATES.LOBBY ? 'Лобби' : 'В игре'}</span></div><div class="flex justify-between items-end mt-2"><div class="flex flex-wrap gap-1" title="${rolesInGame.map(([key, count]) => `${ROLES[key].name} x${count}`).join(', ')}">${rolesInGame.map(([key]) => `<span class="role-icon-small">${ROLES[key].icon}</span>`).join('')}</div><button data-game-id="${doc.id}" class="join-room-btn btn-red px-5 py-2 rounded-md font-semibold" ${game.state !== GAME_STATES.LOBBY || playerCount >= (config.maxPlayers || 10) ? 'disabled' : ''}><i class="fas fa-sign-in-alt mr-1"></i>Войти</button></div>`;
+                    DOM.roomsList.appendChild(roomCard);
+                });
+            });
+        }
+        async function handleCreateGame() {
+            DOM.confirmCreateRoomBtn.disabled = true;
+            try {
+                const config = { minPlayers: parseInt(DOM.minPlayersInput.value), maxPlayers: parseInt(DOM.maxPlayersInput.value), roles: {} };
+                Object.keys(ROLES).forEach(key => { const input = document.getElementById(`role-count-${key}`); if (input && input.value > 0) config.roles[key] = parseInt(input.value); });
+                const totalRoles = Object.values(config.roles).reduce((a, b) => a + b, 0);
+                if (totalRoles > config.maxPlayers) throw new Error("Количество ролей превышает макс. число игроков.");
+                if (config.minPlayers > config.maxPlayers) throw new Error("Мин. игроков не может быть больше макс.");
+                if (!config.roles.mafia || config.roles.mafia < 1) throw new Error("В игре должна быть хотя бы одна мафия.");
+                const roomName = DOM.newRoomNameInput.value.trim() || `Комната игрока ${AppState.playerName}`;
+                AppState.gameId = `game_${Math.random().toString(36).substring(2, 9)}`;
+                
+                const initialGameState = {
+                    hostId: AppState.userId, state: GAME_STATES.LOBBY, name: roomName, config, createdAt: Date.now(), day: 1, winner: null,
+                    players: { [AppState.userId]: { name: AppState.playerName, status: 'alive', role: null, avatar: AppState.userProfile.avatar }},
+                    chat: [{ senderName: 'Система', message: `${AppState.playerName} создал(а) игру.` }], mafiaChat: [],
+                    nightActions: {}, votes: {}, commissarCheck: {}, lastBlocked: {}
+                };
+                await LocalDB.setDoc(`games/${AppState.gameId}`, initialGameState);
+                attachGameListener(AppState.gameId);
+                showScreen('game');
+            } catch (error) { showToast(error.message, true); } finally { DOM.confirmCreateRoomBtn.disabled = false; showScreen('game');}
+        }
+        async function handleJoinGame(gameId) {
+            const button = document.querySelector(`.join-room-btn[data-game-id="${gameId}"]`);
+            if (button) button.disabled = true;
+            try {
+                await LocalDB.runTransaction(`games/${gameId}`, (t) => {
+                    const gameDoc = t.get();
+                    if (!gameDoc.exists()) throw new Error("Игра не найдена.");
+                    const state = gameDoc.data();
+                    if (state.state !== GAME_STATES.LOBBY) throw new Error("Игра уже началась.");
+                    if (Object.keys(state.players || {}).length >= (state.config.maxPlayers || 10)) throw new Error("Комната заполнена.");
+                    const newPlayer = { name: AppState.playerName, status: 'alive', role: null, avatar: AppState.userProfile.avatar };
+                    const newPlayers = { ...state.players, [AppState.userId]: newPlayer };
+                    const newChat = [...state.chat, { senderName: 'Система', message: `${AppState.playerName} присоединился(ась).`}];
+                    t.update({ players: newPlayers, chat: newChat });
+                });
+                AppState.gameId = gameId;
+                attachGameListener(gameId);
+                showScreen('game');
+            } catch (error) { showToast(error.message, true); } finally { if (button) button.disabled = false; }
+        }
+        async function handleLeaveGame() {
+            if (AppState.unsubscribeGame) AppState.unsubscribeGame();
+            if (AppState.gameLoopInterval) clearInterval(AppState.gameLoopInterval);
+            const gameId = AppState.gameId;
+            AppState.gameId = null; AppState.gameState = {}; AppState.unsubscribeGame = null; AppState.gameLoopInterval = null;
+            showScreen('rooms');
+            fetchAndDisplayRooms();
+
+            if (!gameId || !AppState.userId) return;
+            await LocalDB.runTransaction(`games/${gameId}`, (t) => {
+                const gameDoc = t.get();
+                if (!gameDoc.exists()) return;
+                const state = gameDoc.data();
+                const newPlayers = { ...state.players };
+                const leavingPlayerName = newPlayers[AppState.userId]?.name || 'Игрок';
+                delete newPlayers[AppState.userId];
+                if (Object.keys(newPlayers).length === 0) {
+                    t.delete();
+                } else {
+                    const updates = { players: newPlayers, chat: [...state.chat, { senderName: 'Система', message: `${leavingPlayerName} покинул(а) игру.`}]};
+                    if (state.hostId === AppState.userId) updates.hostId = Object.keys(newPlayers)[0];
+                    t.update(updates);
+                }
+            });
+        }
+        async function sendChatMessage() {
+            const message = DOM.chatInput.value.trim();
+            if(!message || !AppState.gameId) return;
+            const isNight = AppState.gameState.state === GAME_STATES.NIGHT;
+            const isMafia = AppState.gameState.players[AppState.userId]?.role === 'mafia';
+            const chatTarget = (isNight && isMafia && AppState.isMafiaChatActive) ? 'mafiaChat' : 'chat';
+            
+            const state = AppState.gameState;
+            const newChat = [...(state[chatTarget] || []), { senderName: AppState.playerName, message }];
+            await LocalDB.updateDoc(`games/${AppState.gameId}`, { [chatTarget]: newChat });
+            DOM.chatInput.value = '';
+        }
+        async function handleSaveProfile() {
+            const newName = DOM.editPlayerNameInput.value.trim();
+            if (!newName) return showToast("Имя не может быть пустым.", true);
+
+            AppState.playerName = newName;
+            const newAvatar = `https://api.dicebear.com/7.x/pixel-art/svg?seed=${newName.replace(/\s/g, '')}`;
+            const profileUpdate = { name: newName, avatar: newAvatar };
+            AppState.userProfile.name = newName;
+            AppState.userProfile.avatar = newAvatar;
+            
+            await LocalDB.updateDoc(`users/${AppState.userId}`, profileUpdate);
+
+            if (AppState.gameId && AppState.gameState.players && AppState.gameState.players[AppState.userId]) {
+                await LocalDB.updateDoc(`games/${AppState.gameId}`, {
+                    [`players.${AppState.userId}.name`]: newName,
+                    [`players.${AppState.userId}.avatar`]: newAvatar
+                });
+            }
+            
+            DOM.userInfoButton.innerHTML = `<i class="fas fa-user mr-2"></i> ${newName}`;
+            showScreen(AppState.previousScreen);
+            showToast("Профиль успешно сохранен!");
+        }
+        
+        // --- ИГРОВАЯ ЛОГИКА ---
+        async function handleStartGame() {
+            if (!AppState.gameState || AppState.gameState.hostId !== AppState.userId) return;
+            DOM.startGameBtn.disabled = true;
+            const playerIds = Object.keys(AppState.gameState.players);
+            const roles = assignRoles(playerIds, AppState.gameState.config);
+            const playerUpdates = { ...AppState.gameState.players };
+            
+            for (const id of playerIds) {
+                playerUpdates[id].role = roles[id];
+                const roleKey = roles[id].charAt(0).toUpperCase() + roles[id].slice(1);
+                const statKey = `playedAs${roleKey}`;
+                const userDoc = await LocalDB.getDoc(`users/${id}`);
+                if(userDoc.exists()) {
+                    const newStats = userDoc.data().stats;
+                    newStats[statKey] = (newStats[statKey] || 0) + 1;
+                    await LocalDB.updateDoc(`users/${id}`, { stats: newStats });
+                }
+            }
+            
+            await LocalDB.updateDoc(`games/${AppState.gameId}`, { players: playerUpdates, state: GAME_STATES.NIGHT, day: 1, chat: [...AppState.gameState.chat, { senderName: 'Система', message: 'Город засыпает. Наступает ночь...' }], nightActions: {}, votes: {}, commissarCheck: {} });
+        }
+        function assignRoles(playerIds, config) {
+            const roles = [];
+            for (const [role, count] of Object.entries(config.roles)) { for (let i = 0; i < count; i++) roles.push(role); }
+            while (roles.length < playerIds.length) roles.push('civilian');
+            for (let i = roles.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [roles[i], roles[j]] = [roles[j], roles[i]]; }
+            const assignments = {};
+            playerIds.forEach((id, index) => { assignments[id] = roles[index]; });
+            return assignments;
+        }
+        async function submitPlayerAction() {
+            if (!AppState.selectedPlayerId) return showToast("Выберите игрока для действия.", true);
+            const me = AppState.gameState.players[AppState.userId];
+            const lastBlockedTarget = AppState.gameState.lastBlocked ? AppState.gameState.lastBlocked[AppState.userId] : null;
+            if (me.role === 'courtesan' && AppState.selectedPlayerId === lastBlockedTarget) return showToast("Нельзя выбирать одного и того же игрока две ночи подряд.", true);
+            
+            const isNight = AppState.gameState.state === GAME_STATES.NIGHT;
+            const state = AppState.gameState;
+            const updatePayload = isNight
+                ? { nightActions: { ...state.nightActions, [AppState.userId]: { role: me.role, target: AppState.selectedPlayerId }}}
+                : { votes: { ...state.votes, [AppState.userId]: AppState.selectedPlayerId }};
+
+            await LocalDB.updateDoc(`games/${AppState.gameId}`, updatePayload);
+            showToast(isNight ? "Ваш ночной ход принят." : "Ваш голос учтён.");
+            DOM.actionButton.classList.add('hidden');
+        }
+
+        // --- ИНИЦИАЛИЗАЦИЯ И ОБРАБОТЧИКИ СОБЫТИЙ ---
+        function setupEventListeners() {
+            DOM.enterLobbyBtn.addEventListener('click', async () => {
+                const name = DOM.playerNameInput.value.trim();
+                if (!name) return showToast("Пожалуйста, введите ваше имя.", true);
+                AppState.playerName = name;
+                
+                const userDoc = await LocalDB.getDoc(`users/${AppState.userId}`);
+                if (!userDoc.exists()) {
+                    const avatar = `https://api.dicebear.com/7.x/pixel-art/svg?seed=${name.replace(/\s/g, '')}`;
+                    AppState.userProfile = { name, avatar, stats: { gamesPlayed: 0, winsAsMafia: 0, winsAsCivilian: 0, winsAsManiac: 0, playedAsMafia: 0, playedAsDoctor: 0, playedAsCommissar: 0, playedAsManiac: 0, playedAsCourtesan: 0, playedAsCivilian: 0 }};
+                    await LocalDB.setDoc(`users/${AppState.userId}`, AppState.userProfile);
+                } else {
+                    AppState.userProfile = userDoc.data();
+                    AppState.playerName = AppState.userProfile.name;
+                }
+                
+                DOM.userInfoButton.innerHTML = `<i class="fas fa-user mr-2"></i> ${AppState.playerName}`;
+                showScreen('rooms');
+                fetchAndDisplayRooms();
+            });
+            DOM.showCreateRoomModalBtn.addEventListener('click', () => { initializeCreateRoomModal(); showScreen('createRoomModal'); });
+            DOM.cancelCreateRoomBtn.addEventListener('click', () => showScreen('rooms'));
+            DOM.confirmCreateRoomBtn.addEventListener('click', handleCreateGame);
+            DOM.rolesConfigList.addEventListener('click', e => { const button = e.target.closest('.role-count-btn'); if (!button) return; const { role, op } = button.dataset; const input = document.getElementById(`role-count-${role}`); let value = parseInt(input.value) + parseInt(op); if (value >= 0 && value <= 5) input.value = value; });
+            DOM.roomsList.addEventListener('click', e => { const button = e.target.closest('.join-room-btn'); if (button && !button.disabled) handleJoinGame(button.dataset.gameId); });
+            DOM.backToRoomsBtn.addEventListener('click', handleLeaveGame);
+            DOM.startGameBtn.addEventListener('click', handleStartGame);
+            DOM.sendChatBtn.addEventListener('click', sendChatMessage);
+            DOM.chatInput.addEventListener('keydown', e => { if (e.key === 'Enter') sendChatMessage(); });
+            DOM.playersList.addEventListener('click', e => {
+                const card = e.target.closest('.player-card');
+                if (!card) return;
+                const pid = card.dataset.pid;
+
+                if (card.classList.contains('selectable')) {
+                    const me = AppState.gameState.players[AppState.userId];
+                    if (pid === AppState.userId && AppState.gameState.state === GAME_STATES.VOTING) return showToast("Нельзя голосовать за себя.", true);
+                    if (pid === AppState.userId && AppState.gameState.state === GAME_STATES.NIGHT && !['doctor', 'courtesan'].includes(me.role)) return showToast("Вы не можете выбрать себя.", true);
+                    document.querySelectorAll('.player-card.selected').forEach(c => c.classList.remove('selected'));
+                    card.classList.add('selected'); AppState.selectedPlayerId = pid;
+                } else {
+                     showProfileModal(pid);
+                }
+            });
+            DOM.actionButton.addEventListener('click', submitPlayerAction);
+            DOM.returnToLobbyBtn.addEventListener('click', handleLeaveGame);
+            DOM.chatToggleGeneral.addEventListener('click', () => { AppState.isMafiaChatActive = false; DOM.chatToggleGeneral.classList.add('active'); DOM.chatToggleMafia.classList.remove('active'); updateUI(AppState.gameState); });
+            DOM.chatToggleMafia.addEventListener('click', () => { AppState.isMafiaChatActive = true; DOM.chatToggleMafia.classList.add('active'); DOM.chatToggleGeneral.classList.remove('active'); updateUI(AppState.gameState); });
+            DOM.userInfoButton.addEventListener('click', () => showProfileModal(AppState.userId));
+            DOM.closeProfileModalBtn.addEventListener('click', () => showScreen(AppState.previousScreen || 'rooms'));
+            DOM.cancelEditProfileBtn.addEventListener('click', () => showProfileModal(AppState.userId));
+            DOM.saveProfileBtn.addEventListener('click', handleSaveProfile);
+
+        }
+        
+        // --- НОВАЯ ФУНКЦИЯ ДЛЯ ИНИЦИАЛИЗАЦИИ ПОЛЬЗОВАТЕЛЯ ИЗ TELEGRAM ---
+        async function initializeUserAndEnterLobby() {
+            const userDoc = await LocalDB.getDoc(`users/${AppState.userId}`);
+
+            if (!userDoc.exists()) {
+                // Если пользователя нет в нашей "БД", создаем его
+                const name = AppState.playerName;
+                const avatar = `https://api.dicebear.com/7.x/pixel-art/svg?seed=${name.replace(/\s/g, '')}`;
+                AppState.userProfile = { name, avatar, stats: { gamesPlayed: 0, winsAsMafia: 0, winsAsCivilian: 0, winsAsManiac: 0, playedAsMafia: 0, playedAsDoctor: 0, playedAsCommissar: 0, playedAsManiac: 0, playedAsCourtesan: 0, playedAsCivilian: 0 }};
+                await LocalDB.setDoc(`users/${AppState.userId}`, AppState.userProfile);
+            } else {
+                // Если есть, загружаем его профиль
+                AppState.userProfile = userDoc.data();
+                AppState.playerName = AppState.userProfile.name;
+            }
+
+            // Обновляем UI и переходим в список комнат
+            DOM.userInfoButton.innerHTML = `<i class="fas fa-user mr-2"></i> ${AppState.playerName}`;
+            showScreen('rooms');
+            fetchAndDisplayRooms();
+        }
+
+        // --- ОБНОВЛЕННАЯ ФУНКЦИЯ ЗАПУСКА ПРИЛОЖЕНИЯ ---
+        function main() {
+            // Инициализируем Telegram Web App
+            const tg = window.Telegram.WebApp;
+            tg.ready(); // Сообщаем Telegram, что приложение готово
+
+            // Проверяем, доступны ли данные пользователя
+            if (tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.id) {
+                // Используем ID и имя из Telegram
+                AppState.userId = String(tg.initDataUnsafe.user.id);
+                AppState.playerName = tg.initDataUnsafe.user.first_name || 'Player';
+
+                // Сразу переходим к созданию/получению профиля в нашей БД
+                // и входу в лобби, минуя экран ввода имени.
+                initializeUserAndEnterLobby();
+            } else {
+                // Этот блок сработает, если открыть страницу в обычном браузере
+                // или если что-то пошло не так. Оставляем старую логику как запасной вариант.
+                console.warn("Telegram user data not found. Running in standalone mode.");
+                showScreen('login');
+                AppState.userId = localStorage.getItem('mafiaUserId');
+                if (!AppState.userId) {
+                    AppState.userId = `user_${Math.random().toString(36).substring(2, 9)}`;
+                    localStorage.setItem('mafiaUserId', AppState.userId);
+                }
+            }
+
+            AppState.isAuthReady = true;
+            setupEventListeners(); // Настройка обработчиков событий остается
+        }
+
+        // --- ИГРОВОЙ ЦИКЛ (ЗАПУСКАЕТСЯ ХОСТОМ) ---
+        async function gameLoop() {
+            if (!AppState.gameId || !AppState.gameState.hostId || AppState.gameState.hostId !== AppState.userId || !AppState.isAuthReady) return;
+            const state = AppState.gameState;
+            if (state.state === GAME_STATES.FINISHED) return;
+
+            const alivePlayers = Object.values(state.players).filter(p => p.status === 'alive');
+            
+            if (state.state === GAME_STATES.NIGHT) {
+                const nightMovers = alivePlayers.filter(p => ['mafia', 'doctor', 'commissar', 'maniac', 'courtesan'].includes(p.role));
+                if (Object.keys(state.nightActions || {}).length >= nightMovers.length) await processNight(state);
+            } else if (state.state === GAME_STATES.VOTING) {
+                if (Object.keys(state.votes || {}).length >= alivePlayers.length) await processDay(state);
+            } else if (state.state === GAME_STATES.DAY) {
+                if (state.dayStartTime && !AppState.dayTimerInterval) {
+                     AppState.dayTimerInterval = setInterval(async () => {
+                         const timeLeft = DAY_TIMER_DURATION - Math.floor((Date.now() - state.dayStartTime) / 1000);
+                         DOM.gameTimer.textContent = `${Math.floor(timeLeft/60)}:${(timeLeft%60).toString().padStart(2, '0')}`;
+                         if (timeLeft <= 0) {
+                             clearInterval(AppState.dayTimerInterval); AppState.dayTimerInterval = null; DOM.gameTimer.textContent = '';
+                             if(AppState.gameState.hostId === AppState.userId) await LocalDB.updateDoc(`games/${AppState.gameId}`, { state: GAME_STATES.VOTING, chat: [...state.chat, { senderName: 'Система', message: 'Время вышло. Голосование.' }] });
+                         }
+                     }, 1000);
+                }
+            } else if (AppState.dayTimerInterval) { 
+                clearInterval(AppState.dayTimerInterval); AppState.dayTimerInterval = null; DOM.gameTimer.textContent = ''; 
+            }
+        }
+
+        // --- ФУНКЦИИ-КОНТРОЛЛЕРЫ ИГРЫ ---
+        async function processNight(state) {
+             let nightSummary = [];
+             let updatedState = JSON.parse(JSON.stringify(state));
+             updatedState.nightActions = {};
+             updatedState.votes = {};
+             updatedState.commissarCheck = {};
+             updatedState.lastBlocked = {};
+
+             const actions = state.nightActions || {};
+             let { mafiaTarget, maniacTarget, doctorTarget, courtesanTarget } = {mafiaTarget: null, maniacTarget: null, doctorTarget: null, courtesanTarget: null};
+             const blockedPlayers = new Set();
+            
+             const courtesanAction = Object.values(actions).find(a => a.role === 'courtesan');
+             const courtesanUID = Object.keys(actions).find(uid => actions[uid].role === 'courtesan');
+             if (courtesanAction) {
+                 courtesanTarget = courtesanAction.target;
+                 blockedPlayers.add(courtesanTarget);
+                 if (courtesanUID) updatedState.lastBlocked[courtesanUID] = courtesanTarget;
+                 nightSummary.push(`Путана провела ночь с кем-то...`);
+             }
+            
+             for(const uid in actions) {
+                 if (blockedPlayers.has(uid)) continue;
+                 const action = actions[uid];
+                 if(action.role === 'mafia') mafiaTarget = action.target;
+                 if(action.role === 'maniac') maniacTarget = action.target;
+                 if(action.role === 'doctor') doctorTarget = action.target;
+                 if(action.role === 'commissar') updatedState.commissarCheck[action.target] = state.players[action.target].team;
+             }
+            
+             const victims = new Set();
+             if (mafiaTarget) victims.add(mafiaTarget);
+             if (maniacTarget) victims.add(maniacTarget);
+            
+             if (doctorTarget && victims.has(doctorTarget)) {
+                 victims.delete(doctorTarget);
+                 nightSummary.push(`Доктор смог спасти одну из жертв!`);
+             }
+            
+             if (victims.size > 0) {
+                  victims.forEach(vid => {
+                       updatedState.players[vid].status = 'dead';
+                       nightSummary.push(`Этой ночью был(а) убит(а) ${state.players[vid].name}.`);
+                  });
+             } else { nightSummary.push('Этой ночью никто не умер.'); }
+
+             updatedState.state = GAME_STATES.DAY;
+             updatedState.dayStartTime = Date.now();
+             updatedState.chat.push({ senderName: 'Система', message: 'Город просыпается.' }, ...nightSummary.map(msg => ({ senderName: 'Система', message: msg })));
+            
+             await checkWinCondition(updatedState);
+        }
+        async function processDay(state) {
+              let message = "", executedPlayerId = null;
+              if(Object.keys(state.votes || {}).length === 0) message = "Жители не смогли договориться.";
+              else {
+                  const voteCounts = {}; Object.values(state.votes).forEach(t => { voteCounts[t] = (voteCounts[t] || 0) + 1; });
+                  const sortedVotes = Object.entries(voteCounts).sort((a,b) => b[1] - a[1]);
+                  if(sortedVotes.length > 1 && sortedVotes[0][1] === sortedVotes[1][1]) message = "Голоса разделились. Казнь отменяется.";
+                  else {
+                      executedPlayerId = sortedVotes[0][0];
+                      message = `По решению жителей казнён(а) ${state.players[executedPlayerId].name}. Его/её роль: ${ROLES[state.players[executedPlayerId].role].name}.`;
+                  }
+              }
+              
+              let updatedState = JSON.parse(JSON.stringify(state));
+              updatedState.state = GAME_STATES.NIGHT;
+              updatedState.day++;
+              updatedState.votes = {};
+              updatedState.chat.push({ senderName: 'Система', message }, { senderName: 'Система', message: 'Город снова засыпает...' });
+              if (executedPlayerId) updatedState.players[executedPlayerId].status = 'dead';
+             
+              await checkWinCondition(updatedState);
+        }
+        async function checkWinCondition(state) {
+            const alivePlayers = Object.values(state.players).filter(p => p.status === 'alive');
+            const aliveMafia = alivePlayers.filter(p => p.team === 'mafia');
+            const aliveManiac = alivePlayers.filter(p => p.team === 'maniac');
+            const aliveCivilians = alivePlayers.filter(p => p.team === 'civilian');
+
+            let winner = null;
+            if (alivePlayers.length > 0 && aliveManiac.length === alivePlayers.length) winner = 'Маньяк';
+            else if (alivePlayers.length <= 2 && aliveManiac.length > 0) winner = 'Маньяк';
+            else if (aliveMafia.length === 0 && aliveManiac.length === 0) winner = 'Мирные жители';
+            else if (aliveMafia.length > 0 && aliveMafia.length >= aliveCivilians.length && aliveManiac.length === 0) winner = 'Мафия';
+            
+            if (winner) {
+                 state.winner = winner;
+                 state.state = GAME_STATES.FINISHED;
+                 for (const pid in state.players) {
+                     const player = state.players[pid];
+                     const userDoc = await LocalDB.getDoc(`users/${pid}`);
+                     if (userDoc.exists()) {
+                         const profile = userDoc.data();
+                         profile.stats.gamesPlayed = (profile.stats.gamesPlayed || 0) + 1;
+                         if (winner === 'Мафия' && player.team === 'mafia') profile.stats.winsAsMafia = (profile.stats.winsAsMafia || 0) + 1;
+                         if (winner === 'Мирные жители' && player.team === 'civilian') profile.stats.winsAsCivilian = (profile.stats.winsAsCivilian || 0) + 1;
+                         if (winner === 'Маньяк' && player.team === 'maniac') profile.stats.winsAsManiac = (profile.stats.winsAsManiac || 0) + 1;
+                         await LocalDB.updateDoc(`users/${pid}`, { stats: profile.stats });
+                     }
+                 }
+            }
+             await LocalDB.setDoc(`games/${AppState.gameId}`, state);
+
+        }
+
+        window.addEventListener('load', main);
+    </script>
+</body>
+</html>
