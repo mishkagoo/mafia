@@ -1,457 +1,716 @@
 <!DOCTYPE html>
-<html lang="ru" class="scroll-smooth">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Егор Золотов - Профессиональный Фотограф</title>
+    <title>Учет Рассрочек</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #0f172a; /* Более глубокий темно-синий */
-            color: #e2e8f0; /* Светло-серый текст */
+            background-color: #111827;
+            color: #e5e7eb;
         }
-        .font-heading {
-            font-family: 'Montserrat', sans-serif;
+        .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
         }
-        .modal {
-            transition: opacity 0.3s ease;
+        .fade-in {
+            animation: fadeIn 0.3s ease-out;
         }
-        .modal-content {
-            transition: transform 0.3s ease, opacity 0.3s ease;
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1.0); }
         }
-        .gallery-item img {
-            transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), filter 0.4s ease;
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1f2937; }
+        ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
+        .loader {
+            border: 4px solid #374151;
+            border-top: 4px solid #6366f1;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
         }
-        .gallery-item:hover img {
-            transform: scale(1.08);
-            filter: brightness(0.9);
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
-        .btn-primary {
-            @apply bg-indigo-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-indigo-500 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-indigo-500/50;
-        }
-        .btn-secondary {
-            @apply bg-slate-700 text-white font-bold py-3 px-6 rounded-lg hover:bg-slate-600 transition-all duration-300 transform hover:scale-105;
-        }
-        /* Анимация появления секций */
-        .fade-in-section {
+        .message-box {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 500;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
             opacity: 0;
-            transform: translateY(40px);
-            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+            transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+            visibility: hidden;
         }
-        .fade-in-section.is-visible {
+        .message-box.show {
             opacity: 1;
-            transform: translateY(0);
+            transform: translateX(-50%) translateY(0);
+            visibility: visible;
         }
-        .gallery-item .overlay {
-            transition: opacity 0.4s ease;
-        }
-        .gallery-item:hover .overlay {
-            opacity: 1;
-        }
+        .message-box.success { background-color: #10B981; color: white; }
+        .message-box.error { background-color: #EF4444; color: white; }
     </style>
 </head>
 <body class="antialiased">
 
-    <!-- 
-    =====================================================================
-    | НАСТРОЙКИ САЙТА                                                   |
-    |                                                                   |
-    | Редактируйте этот блок, чтобы изменить контент на всем сайте.     |
-    | Вам не нужно трогать остальной HTML код.                          |
-    =====================================================================
-    -->
-    <script>
-        const siteData = {
-            photographerName: "Егор Золотов",
-            specialization: "Профессиональный фотограф",
-            hero: {
-                headline: "Ловлю моменты, создаю воспоминания",
-                subheadline: "Профессиональная фотосъемка в вашем городе. Откройте для себя магию качественной фотографии.",
-                imageUrl: "https://images.unsplash.com/photo-1502982720700-bfff97f2ecac?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-            },
-            about: {
-                title: "Обо мне",
-                bio: "Привет! Меня зовут Егор, и я влюблен в фотографию. Моя цель — не просто сделать красивые кадры, а рассказать вашу историю, передать эмоции и сохранить самые ценные моменты вашей жизни. Я специализируюсь на различных видах съемки и всегда открыт для интересных творческих проектов.",
-                avatarUrl: "https://mishkagoo.github.io/mafia/Egor.jpg"
-            },
-            portfolio: {
-                title: "Мои работы",
-                categories: ["Все", "Свадьбы", "Портреты", "Lovestory", "Дни рождения", "Крещение", "Репортаж"],
-                images: [
-                    // Свадьбы
-                    { src: "https://mishkagoo.github.io/mafia/sw.jpg?w=500&auto=format&fit=crop&q=60", category: "Свадьбы", title: "Свадебный образ" },
-                    { src: "https://mishkagoo.github.io/mafia/sw3.jpg?w=500&auto=format&fit=crop&q=60", category: "Свадьбы", title: "Нежный момент" },
-                    { src: "https://mishkagoo.github.io/mafia/sw4.jpg?w=500&auto=format&fit=crop&q=60", category: "Свадьбы", title: "Детали" },
-                    { src: "https://mishkagoo.github.io/mafia/sw1.jpg?w=500&auto=format&fit=crop&q=60", category: "Свадьбы", title: "Церемония" },
-                    { src: "https://mishkagoo.github.io/mafia/sw2.jpg?w=500&auto=format&fit=crop&q=60", category: "Свадьбы", title: "Первый танец" },
-                    
-                    // Портреты
-                  //  { src: "?w=500&auto=format&fit=crop&q=60", category: "Портреты", title: "Студийный портрет" },
-                  //  { src: "?w=500&auto=format&fit=crop&q=60", category: "Портреты", title: "На природе" },
-                  //  { src: "?w=500&auto=format&fit=crop&q=60", category: "Портреты", title: "Характер" },
-                   // { src: "?w=500&auto=format&fit=crop&q=60", category: "Портреты", title: "Черно-белый стиль" },
-                    
-                    // Lovestory
-                    { src: "https://mishkagoo.github.io/mafia/li.jpg?w=500&auto=format&fit=crop&q=60", category: "Lovestory", title: "Прогулка вдвоем" },
-                    { src: "https://mishkagoo.github.io/mafia/li3.jpg?w=500&auto=format&fit=crop&q=60", category: "Lovestory", title: "Искренние улыбки" },
-                    { src: "https://mishkagoo.github.io/mafia/li4.jpg?w=500&auto=format&fit=crop&q=60", category: "Lovestory", title: "Романтика города" },
-                    
-                    // Дни рождения
-                    { src: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=500&auto=format&fit=crop&q=60", category: "Дни рождения", title: "Праздничный торт" },
-                    { src: "https://images.unsplash.com/photo-1513151233558-d860c5398176?w=500&auto=format&fit=crop&q=60", category: "Дни рождения", title: "Веселье с друзьями" },
-                    { src: "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=500&auto=format&fit=crop&q=60", category: "Дни рождения", title: "Яркие моменты" },
-
-                    // Крещение
-                    { src: "https://mishkagoo.github.io/mafia/kre2.jpg", category: "Крещение", title: "Светлый момент" },
-                    { src: "https://mishkagoo.github.io/mafia/kre1.jpg", category: "Крещение", title: "Семья" },
-                    { src: "https://mishkagoo.github.io/mafia/kre.jpg", category: "Крещение", title: "Ангельский взгляд" },
-
-                    // Репортаж
-                    { src: "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=500&auto=format&fit=crop&q=60", category: "Репортаж", title: "Мероприятие" },
-                    { src: "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=500&auto=format&fit=crop&q=60", category: "Репортаж", title: "Концерт" },
-                    { src: "https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?w=500&auto=format&fit=crop&q=60", category: "Репортаж", title: "Живые эмоции" },
-                ]
-            },
-            services: {
-                title: "Услуги и цены",
-                packages: [
-                    { name: "Портретная съемка", price: "от 150 бел.руб", description: "Индивидуальная фотосессия на улице или в студии. Идеально для обновления портфолио, соцсетей или просто для себя.", features: ["1-2 часа съемки", "Помощь в позировании", "20 фото в ретуши", "Готовность - 7 дней"] },
-                    { name: "Свадебная съемка", price: "от 800 бел.руб", description: "Полное сопровождение вашего самого важного дня. От сборов невесты до финального торта.", features: ["От 4 часов съемки", "Консультация и планирование", "от 200 обработанных фото", "Анонс из 10 фото на следующий день"] },
-                    { name: "Lovestory / Репортаж", price: "от 120 бел.руб/час", description: "Съемка вашей истории любви, мероприятий, дней рождений. Живые и эмоциональные кадры без постановки.", features: ["Почасовая оплата", "Весь удачный материал в цветокоррекции", "Естественные эмоции", "Срок сдачи - от 3 дней"] }
-                ]
-            },
-            contact: {
-                title: "Свяжитесь со мной",
-                description: "Готовы создать что-то прекрасное вместе? Напишите мне, и мы обсудим все детали вашей будущей фотосессии.",
-                email: "egor.zolotov.photo@example.com",
-                phone: "+375 (25) 923-96-55",
-                socials: [
-                    { name: "Telegram", url: "https://t.me/zolotov_photo_" },
-                    { name: "Instagram", url: "https://instagram.com/zolotov_photo_" },
-                    { name: "VK", url: "https://vk.com/zolotov_photo_" }
-                ]
-            }
-        };
-    </script>
-    <!-- КОНЕЦ БЛОКА НАСТРОЕК -->
-
-    <!-- Навигация -->
-    <header id="header" class="bg-slate-900/80 backdrop-blur-sm fixed top-0 left-0 right-0 z-50 shadow-lg">
-        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
-            <a href="#" id="header-name" class="text-xl md:text-2xl font-bold font-heading tracking-wider text-white"></a>
-            <nav class="hidden md:flex space-x-8 items-center">
-                <a href="#portfolio" class="text-slate-300 hover:text-white transition-colors duration-300">Портфолио</a>
-                <a href="#services" class="text-slate-300 hover:text-white transition-colors duration-300">Услуги</a>
-                <a href="#about" class="text-slate-300 hover:text-white transition-colors duration-300">Обо мне</a>
-                <a href="#contact" class="btn-primary !py-2 !px-5">Связаться</a>
-            </nav>
-            <button id="mobile-menu-button" class="md:hidden text-white focus:outline-none">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
-            </button>
-        </div>
-        <!-- Мобильное меню -->
-        <div id="mobile-menu" class="hidden md:hidden bg-slate-900/95">
-            <a href="#portfolio" class="block py-3 px-6 text-slate-300 hover:bg-slate-800 transition-colors">Портфолио</a>
-            <a href="#services" class="block py-3 px-6 text-slate-300 hover:bg-slate-800 transition-colors">Услуги</a>
-            <a href="#about" class="block py-3 px-6 text-slate-300 hover:bg-slate-800 transition-colors">Обо мне</a>
-            <a href="#contact" class="block py-3 px-6 text-slate-300 hover:bg-slate-800 transition-colors">Связаться</a>
-        </div>
-    </header>
-
-    <main>
-        <!-- Главный экран -->
-        <section id="hero" class="h-screen min-h-[700px] flex items-center justify-center text-center text-white relative overflow-hidden">
-            <div id="hero-bg" class="absolute inset-0 bg-cover bg-center z-0 transform scale-110 transition-transform duration-500 ease-out"></div>
-            <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/70 to-transparent z-10"></div>
-            <div class="relative z-20 px-6">
-                <h1 id="hero-headline" class="text-4xl md:text-6xl lg:text-7xl font-bold font-heading mb-4 text-shadow-lg"></h1>
-                <p id="hero-subheadline" class="text-lg md:text-xl max-w-3xl mx-auto text-slate-300"></p>
-                <a href="#portfolio" class="mt-8 inline-block btn-primary">Смотреть работы</a>
-            </div>
-        </section>
-
-        <!-- Портфолио -->
-        <section id="portfolio" class="py-20 md:py-32 bg-slate-800">
-            <div class="container mx-auto px-6">
-                <h2 id="portfolio-title" class="text-3xl md:text-5xl font-bold font-heading text-center mb-4"></h2>
-                <p class="text-center text-slate-400 mb-12 max-w-2xl mx-auto">Здесь собраны мои лучшие работы. Нажмите на любую фотографию, чтобы посмотреть ее в полном размере.</p>
-                
-                <div id="portfolio-filters" class="flex justify-center flex-wrap gap-2 md:gap-4 mb-12">
-                    <!-- Фильтры будут вставлены сюда -->
-                </div>
-
-                <div id="portfolio-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-                    <!-- Фотографии будут вставлены сюда -->
-                </div>
-            </div>
-        </section>
-
-        <!-- Услуги -->
-        <section id="services" class="py-20 md:py-32 bg-slate-900">
-            <div class="container mx-auto px-6">
-                <h2 id="services-title" class="text-3xl md:text-5xl font-bold font-heading text-center mb-12"></h2>
-                <div id="services-grid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <!-- Карточки услуг будут вставлены сюда -->
-                </div>
-            </div>
-        </section>
-
-        <!-- Обо мне -->
-        <section id="about" class="py-20 md:py-32 bg-slate-800">
-            <div class="container mx-auto px-6">
-                <div class="flex flex-col md:flex-row items-center gap-10 md:gap-16">
-                    <div class="w-full md:w-1/3">
-                        <img id="about-avatar" src="" alt="Фото фотографа" class="rounded-full aspect-square object-cover shadow-2xl mx-auto w-64 h-64 md:w-full md:h-auto max-w-sm ring-4 ring-slate-700">
-                    </div>
-                    <div class="w-full md:w-2/3 text-center md:text-left">
-                        <h2 id="about-title" class="text-3xl md:text-5xl font-bold font-heading mb-4"></h2>
-                        <p id="about-bio" class="text-lg text-slate-300 leading-relaxed"></p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Контакты -->
-        <section id="contact" class="py-20 md:py-32 bg-slate-900">
-            <div class="container mx-auto px-6 text-center">
-                <h2 id="contact-title" class="text-3xl md:text-5xl font-bold font-heading mb-4"></h2>
-                <p id="contact-description" class="max-w-2xl mx-auto text-lg text-slate-300 mb-8"></p>
-                
-                <div class="max-w-md mx-auto bg-slate-800 p-8 rounded-2xl shadow-lg border border-slate-700">
-                    <div class="space-y-6">
-                         <a id="contact-phone-link" href="#" class="block group">
-                             <p class="text-slate-400 text-sm">Телефон</p>
-                             <p id="contact-phone" class="text-xl group-hover:text-indigo-400 transition-colors duration-300"></p>
-                         </a>
-                         <a id="contact-email-link" href="#" class="block group">
-                             <p class="text-slate-400 text-sm">Email</p>
-                             <p id="contact-email" class="text-xl group-hover:text-indigo-400 transition-colors duration-300"></p>
-                         </a>
-                    </div>
-                    <div id="contact-socials" class="mt-8 pt-6 border-t border-slate-700 flex justify-center gap-6">
-                        <!-- Соцсети будут вставлены сюда -->
-                    </div>
-                </div>
-            </div>
-        </section>
-    </main>
-
-    <!-- Футер -->
-    <footer class="bg-slate-900 py-8 border-t border-slate-800">
-        <div class="container mx-auto px-6 text-center text-slate-400">
-            <p>&copy; <span id="footer-year"></span> <span id="footer-name"></span>. Все права защищены.</p>
-        </div>
-    </footer>
-
-    <!-- Модальное окно для фото -->
-    <div id="image-modal" class="modal fixed inset-0 bg-black/90 flex items-center justify-center z-50 opacity-0 pointer-events-none p-4">
-        <div class="modal-content transform scale-95 opacity-0 max-w-5xl max-h-[90vh] w-full">
-            <img id="modal-img" src="" alt="Увеличенное изображение" class="w-full h-full object-contain rounded-lg shadow-2xl">
-        </div>
-        <button id="modal-close" class="absolute top-4 right-4 text-white text-5xl opacity-80 hover:opacity-100 transition-opacity">&times;</button>
+    <div id="loader" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/80">
+        <div class="loader"></div>
     </div>
 
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // --- Заполнение контента из объекта siteData ---
-        document.getElementById('header-name').textContent = siteData.photographerName;
-        document.title = `${siteData.photographerName} - ${siteData.specialization}`;
+    <!-- Экран входа -->
+    <div id="loginContainer" class="fixed inset-0 z-40 flex items-center justify-center bg-gray-900 text-center hidden">
+        <div class="bg-gray-800 p-8 rounded-xl shadow-2xl fade-in">
+            <h1 class="text-3xl font-bold text-white mb-2">Учет Рассрочек</h1>
+            <p class="text-gray-400 mb-6">Войдите, чтобы продолжить</p>
+            <button id="signInBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-transform transform hover:scale-105 flex items-center mx-auto disabled:opacity-50 disabled:cursor-wait">
+                <i id="signInIcon" class="fab fa-google mr-3"></i>
+                <span id="signInText">Войти с помощью Google</span>
+            </button>
+        </div>
+    </div>
+
+    <div id="app" class="container mx-auto p-4 md:p-8 max-w-7xl hidden">
+
+        <header class="flex flex-wrap justify-between items-center mb-8">
+            <div>
+                <h1 class="text-3xl md:text-4xl font-bold text-white">Мои Рассрочки</h1>
+                <p class="text-gray-400 mt-1">Панель для отслеживания платежей по товарам.</p>
+            </div>
+            <div id="userInfo" class="flex items-center gap-4 mt-4 md:mt-0">
+                 <img id="userPhoto" src="" alt="User Photo" class="w-10 h-10 rounded-full bg-gray-700">
+                 <div>
+                    <span id="userName" class="font-medium text-white block"></span>
+                    <button id="signOutBtn" class="text-sm text-indigo-400 hover:text-indigo-300 transition">Выйти</button>
+                 </div>
+            </div>
+        </header>
+
+        <div class="flex flex-wrap justify-between items-center mb-8 gap-4">
+            <div>
+                <label for="sortOrder" class="text-sm font-medium text-gray-400 mr-2">Сортировать по:</label>
+                <select id="sortOrder" class="bg-gray-700 border-gray-600 rounded-md shadow-sm text-white focus:ring-indigo-500 focus:border-indigo-500">
+                    <option value="date-added-desc">Дате добавления (новые)</option>
+                    <option value="name-asc">Названию (А-Я)</option>
+                    <option value="remaining-desc">Остатку (убыв.)</option>
+                    <option value="due-date-asc">Дате платежа (ближ.)</option>
+                </select>
+            </div>
+            <button id="openModalBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-transform transform hover:scale-105">
+                <i class="fas fa-plus mr-2"></i>Добавить товар
+            </button>
+        </div>
+
+        <div id="stats" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-gray-800 p-6 rounded-xl shadow-lg">
+                <h3 class="text-lg font-semibold text-gray-400">Общая Сумма</h3>
+                <p id="totalAmount" class="text-3xl font-bold text-white mt-2">0.00 BYN</p>
+            </div>
+            <div class="bg-gray-800 p-6 rounded-xl shadow-lg">
+                <h3 class="text-lg font-semibold text-gray-400">Выплачено</h3>
+                <p id="totalPaid" class="text-3xl font-bold text-green-400 mt-2">0.00 BYN</p>
+            </div>
+            <div class="bg-gray-800 p-6 rounded-xl shadow-lg">
+                <h3 class="text-lg font-semibold text-gray-400">Остаток</h3>
+                <p id="totalRemaining" class="text-3xl font-bold text-red-400 mt-2">0.00 BYN</p>
+            </div>
+        </div>
         
-        // Hero
-        const heroBg = document.getElementById('hero-bg');
-        if(heroBg) {
-            heroBg.style.backgroundImage = `url('${siteData.hero.imageUrl}')`;
-        }
-        document.getElementById('hero-headline').textContent = siteData.hero.headline;
-        document.getElementById('hero-subheadline').textContent = siteData.hero.subheadline;
-
-        // About
-        document.getElementById('about-title').textContent = siteData.about.title;
-        document.getElementById('about-bio').textContent = siteData.about.bio;
-        document.getElementById('about-avatar').src = siteData.about.avatarUrl;
-
-        // Portfolio
-        const portfolioTitle = document.getElementById('portfolio-title');
-        if (portfolioTitle) portfolioTitle.textContent = siteData.portfolio.title;
-        const portfolioGrid = document.getElementById('portfolio-grid');
-        const portfolioFilters = document.getElementById('portfolio-filters');
+        <div id="itemsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        </div>
         
-        let currentFilter = 'Все';
+        <div id="noItemsMessage" class="hidden text-center py-16 bg-gray-800 rounded-xl">
+            <i class="fas fa-box-open fa-3x text-gray-500 mb-4"></i>
+            <h2 class="text-xl font-semibold text-white">Товаров пока нет</h2>
+            <p class="text-gray-400">Нажмите "Добавить товар", чтобы начать.</p>
+        </div>
 
-        function renderPortfolio() {
-            if (!portfolioGrid) return;
-            portfolioGrid.innerHTML = '';
-            let imagesToRender;
+    </div>
 
-            if (currentFilter === 'Все') {
-                imagesToRender = [];
-                const categories = siteData.portfolio.categories.filter(c => c !== 'Все');
-                categories.forEach(category => {
-                    const categoryImages = siteData.portfolio.images
-                        .filter(img => img.category === category)
-                        .slice(0, 3); // Взять первые 3 фото из каждой категории
-                    imagesToRender.push(...categoryImages);
-                });
+    <!-- Модальное окно для добавления/редактирования товара -->
+    <div id="itemModal" class="fixed inset-0 z-50 flex items-center justify-center modal-backdrop hidden">
+        <div class="bg-gray-800 rounded-xl shadow-2xl w-full max-w-lg m-4 fade-in max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b border-gray-700 flex justify-between items-center">
+                <h2 id="modalTitle" class="text-2xl font-bold text-white">Добавить новый товар</h2>
+                <button id="closeModalBtn" class="text-gray-400 hover:text-white text-2xl leading-none">&times;</button>
+            </div>
+            <form id="itemForm" class="p-6 space-y-4">
+                <input type="hidden" id="itemId">
+                <div>
+                    <label for="itemName" class="block text-sm font-medium text-gray-300">Название товара</label>
+                    <input type="text" id="itemName" class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md shadow-sm text-white focus:ring-indigo-500 focus:border-indigo-500" required>
+                </div>
+                <div>
+                    <label for="buyerName" class="block text-sm font-medium text-gray-300">ФИО покупателя</label>
+                    <input type="text" id="buyerName" class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md shadow-sm text-white focus:ring-indigo-500 focus:border-indigo-500" placeholder="Иванов Иван Иванович">
+                </div>
+                <div>
+                    <label for="buyerPhone" class="block text-sm font-medium text-gray-300">Номер телефона</label>
+                    <input type="tel" id="buyerPhone" class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md shadow-sm text-white focus:ring-indigo-500 focus:border-indigo-500" placeholder="+375 (29) 123-45-67">
+                </div>
+                <div>
+                    <label for="totalPrice" class="block text-sm font-medium text-gray-300">Общая стоимость (BYN)</label>
+                    <input type="number" id="totalPrice" min="0" step="0.01" class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md shadow-sm text-white focus:ring-indigo-500 focus:border-indigo-500" required>
+                </div>
+                <div>
+                    <label for="downPayment" class="block text-sm font-medium text-gray-300">Первоначальный взнос (BYN)</label>
+                    <input type="number" id="downPayment" min="0" step="0.01" class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md shadow-sm text-white focus:ring-indigo-500 focus:border-indigo-500" required>
+                </div>
+                <div>
+                    <label for="installmentsCount" class="block text-sm font-medium text-gray-300">Количество платежей (мес.)</label>
+                    <input type="number" id="installmentsCount" min="1" class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md shadow-sm text-white focus:ring-indigo-500 focus:border-indigo-500" required>
+                </div>
+                 <div>
+                    <label for="startDate" class="block text-sm font-medium text-gray-300">Дата первого платежа</label>
+                    <input type="date" id="startDate" class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md shadow-sm text-white focus:ring-indigo-500 focus:border-indigo-500" required>
+                </div>
+                <div class="pt-4 flex justify-end space-x-3">
+                    <button type="button" id="cancelBtn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition">Отмена</button>
+                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Модальное окно подтверждения -->
+    <div id="confirmModal" class="fixed inset-0 z-50 flex items-center justify-center modal-backdrop hidden">
+        <div class="bg-gray-800 rounded-xl shadow-2xl w-full max-w-sm m-4 fade-in">
+            <div class="p-6 text-center">
+                <i class="fas fa-exclamation-triangle text-yellow-400 text-4xl mb-4"></i>
+                <h3 id="confirmModalTitle" class="text-lg font-semibold text-white">Подтвердите действие</h3>
+                <p id="confirmModalText" class="text-gray-300 mt-2 mb-6">Вы уверены?</p>
+                <div class="flex justify-center space-x-4">
+                    <button id="confirmCancelBtn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-lg transition">Отмена</button>
+                    <button id="confirmOkBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg transition">Удалить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="messageBox" class="message-box"></div>
+    
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { 
+            getAuth, 
+            onAuthStateChanged, 
+            GoogleAuthProvider, 
+            signInWithRedirect, 
+            getRedirectResult,
+            signOut,
+            signInAnonymously,
+            signInWithCustomToken
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { 
+            getFirestore, 
+            collection, 
+            doc, 
+            addDoc, 
+            onSnapshot, 
+            updateDoc, 
+            deleteDoc, 
+            serverTimestamp, 
+            query,
+            setLogLevel
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ И ИНИЦИАЛИЗАЦИЯ ---
+        let app, db, auth;
+        let userId = null;
+        let appId;
+        let allItems = [];
+        let confirmCallback = null;
+        let unsubscribe;
+
+        // --- ЭЛЕМЕНТЫ DOM ---
+        const loader = document.getElementById('loader');
+        const loginContainer = document.getElementById('loginContainer');
+        const signInBtn = document.getElementById('signInBtn');
+        const signOutBtn = document.getElementById('signOutBtn');
+        const userPhoto = document.getElementById('userPhoto');
+        const userName = document.getElementById('userName');
+        const appContainer = document.getElementById('app');
+        const itemsContainer = document.getElementById('itemsContainer');
+        const openModalBtn = document.getElementById('openModalBtn');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const itemModal = document.getElementById('itemModal');
+        const itemForm = document.getElementById('itemForm');
+        const modalTitle = document.getElementById('modalTitle');
+        const noItemsMessage = document.getElementById('noItemsMessage');
+        const totalAmountEl = document.getElementById('totalAmount');
+        const totalPaidEl = document.getElementById('totalPaid');
+        const totalRemainingEl = document.getElementById('totalRemaining');
+        const sortOrderSelect = document.getElementById('sortOrder');
+        const messageBox = document.getElementById('messageBox');
+        const confirmModal = document.getElementById('confirmModal');
+        const confirmModalText = document.getElementById('confirmModalText');
+        const confirmCancelBtn = document.getElementById('confirmCancelBtn');
+        const confirmOkBtn = document.getElementById('confirmOkBtn');
+
+        // --- УПРАВЛЕНИЕ UI ---
+        const showMessage = (message, type = 'success') => {
+            messageBox.textContent = message;
+            messageBox.className = `message-box show ${type}`;
+            setTimeout(() => {
+                messageBox.classList.remove('show');
+            }, 3000);
+        };
+
+        const setLoginButtonState = (isLoading) => {
+            const icon = document.getElementById('signInIcon');
+            const text = document.getElementById('signInText');
+            signInBtn.disabled = isLoading;
+            if (isLoading) {
+                icon.className = 'fas fa-spinner fa-spin mr-3';
+                text.textContent = 'Вход...';
             } else {
-                imagesToRender = siteData.portfolio.images.filter(img => 
-                    img.category === currentFilter
-                );
+                icon.className = 'fab fa-google mr-3';
+                text.textContent = 'Войти с помощью Google';
+            }
+        };
+        
+        const showModal = (isEdit = false, item = null) => {
+            itemForm.reset();
+            if (isEdit && item) {
+                modalTitle.textContent = 'Редактировать товар';
+                document.getElementById('itemId').value = item.id;
+                document.getElementById('itemName').value = item.name;
+                document.getElementById('buyerName').value = item.buyerName || '';
+                document.getElementById('buyerPhone').value = item.buyerPhone || '';
+                document.getElementById('totalPrice').value = item.totalPrice;
+                document.getElementById('downPayment').value = item.downPayment;
+                document.getElementById('installmentsCount').value = item.installmentsCount;
+                document.getElementById('startDate').value = item.startDate;
+            } else {
+                modalTitle.textContent = 'Добавить новый товар';
+                document.getElementById('itemId').value = '';
+                document.getElementById('startDate').valueAsDate = new Date();
+            }
+            itemModal.classList.remove('hidden');
+        };
+
+        const hideModal = () => itemModal.classList.add('hidden');
+        
+        const showConfirmModal = (text, onConfirm) => {
+            confirmModalText.textContent = text;
+            confirmCallback = onConfirm;
+            confirmModal.classList.remove('hidden');
+        };
+        const hideConfirmModal = () => confirmModal.classList.add('hidden');
+
+        // --- ИНИЦИАЛИЗАЦИЯ FIREBASE И АУТЕНТИФИКАЦИЯ ---
+        async function main() {
+            appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+            
+            // ИСПРАВЛЕНО: Добавлен блок конфигурации для локального запуска.
+            // При запуске на вашем компьютере, убедитесь, что здесь указаны ВАШИ данные из Firebase.
+            const localFirebaseConfig = {
+                apiKey: "AIzaSyBr-Wtkvh3WxVGc28nIfoUNooqCQfkOi0c",
+                authDomain: "rassrochki-132d1.firebaseapp.com",
+                projectId: "rassrochki-132d1",
+                storageBucket: "rassrochki-132d1.appspot.com", // Исправлено на .appspot.com
+                messagingSenderId: "914541016991",
+                appId: "1:914541016991:web:9ebec5f8da20fd9668afaa"
+            };
+
+            // 1. Инициализация Firebase
+            try {
+                // Проверяем, предоставлена ли конфигурация средой (Canvas)
+                const firebaseConfig = typeof __firebase_config !== 'undefined' 
+                    ? JSON.parse(__firebase_config) 
+                    : localFirebaseConfig;
+
+                // Проверка, что конфигурация заполнена
+                if (!firebaseConfig.apiKey || firebaseConfig.apiKey.startsWith("AIzaSyA")) {
+                     console.warn("Пожалуйста, убедитесь, что вы заполнили конфигурацию Firebase в файле HTML для локального тестирования.");
+                }
+
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                setLogLevel('debug');
+                console.log("Firebase успешно инициализирован.");
+            } catch (e) {
+                console.error("Критическая ошибка инициализации Firebase:", e);
+                loader.innerHTML = `<div class="text-center p-8 text-red-500">Ошибка: ${e.message}. Убедитесь, что вы правильно скопировали конфигурацию вашего проекта из Firebase в объект 'localFirebaseConfig' в этом файле.</div>`;
+                return;
             }
 
-            imagesToRender.forEach(image => {
-                const item = document.createElement('div');
-                item.className = 'gallery-item cursor-pointer overflow-hidden rounded-lg shadow-lg group relative';
-                item.innerHTML = `
-                    <img src="${image.src}" alt="${image.title}" class="w-full h-full object-cover aspect-square" onerror="this.onerror=null;this.src='https://placehold.co/600x600/222/fff?text=Error';">
-                    <div class="overlay absolute inset-0 bg-black/50 flex items-end p-4 opacity-0">
-                        <h4 class="text-white font-semibold text-lg transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">${image.title}</h4>
+            // 2. Обработка результата перенаправления от Google
+            try {
+                setLoginButtonState(true);
+                const result = await getRedirectResult(auth);
+                if (result) {
+                    console.log("Результат перенаправления получен:", result.user);
+                    showMessage(`Добро пожаловать, ${result.user.displayName}!`, "success");
+                }
+            } catch (error) {
+                console.error("Ошибка при получении результата перенаправления:", error);
+                showMessage(`Ошибка входа: ${error.code} - ${error.message}`, "error");
+            } finally {
+                setLoginButtonState(false);
+            }
+            
+            // 3. Проверка токена и состояния аутентификации
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                     console.log("Обнаружен токен, попытка входа...");
+                     await signInWithCustomToken(auth, __initial_auth_token);
+                } else if (!auth.currentUser) {
+                    console.log("Токен не найден. Пользователь должен войти.");
+                }
+            } catch (error) {
+                console.error("Ошибка при входе с токеном или анонимно:", error);
+                showMessage("Ошибка сессии, обновите страницу.", "error");
+            }
+
+
+            // 4. Установка слушателя изменения состояния аутентификации
+            onAuthStateChanged(auth, (user) => {
+                loader.classList.add('hidden');
+                if (user && !user.isAnonymous) {
+                    userId = user.uid;
+                    userName.textContent = user.displayName || 'Пользователь';
+                    userPhoto.src = user.photoURL || `https://placehold.co/40x40/64748b/e2e8f0?text=${user.displayName?.[0] || 'U'}`;
+                    userPhoto.onerror = () => { userPhoto.src = 'https://placehold.co/40x40/64748b/e2e8f0?text=U'; };
+
+                    loginContainer.classList.add('hidden');
+                    appContainer.classList.remove('hidden');
+                    
+                    console.log("Пользователь аутентифицирован:", userId);
+                    listenForItems();
+                } else {
+                    userId = null;
+                    if (unsubscribe) {
+                        unsubscribe(); 
+                    }
+                    allItems = [];
+                    renderItems(allItems);
+                    updateStats(allItems);
+
+                    appContainer.classList.add('hidden');
+                    loginContainer.classList.remove('hidden');
+                    console.log("Пользователь не аутентифицирован.");
+                }
+            });
+        }
+
+        // --- ОБРАБОТЧИКИ СОБЫТИЙ ---
+        signInBtn.addEventListener('click', async () => {
+            setLoginButtonState(true);
+            const provider = new GoogleAuthProvider();
+            try {
+                await signInWithRedirect(auth, provider);
+            } catch (error) {
+                console.error("Ошибка при инициировании входа через Google:", error);
+                showMessage(`Ошибка: ${error.code}`, "error");
+                setLoginButtonState(false);
+            }
+        });
+
+        signOutBtn.addEventListener('click', async () => {
+            try {
+                await signOut(auth);
+                showMessage("Вы успешно вышли.", "success");
+            } catch (error) {
+                console.error("Ошибка выхода:", error);
+                showMessage("Не удалось выйти.", "error");
+            }
+        });
+
+        openModalBtn.addEventListener('click', () => showModal());
+        closeModalBtn.addEventListener('click', hideModal);
+        cancelBtn.addEventListener('click', hideModal);
+        confirmCancelBtn.addEventListener('click', hideConfirmModal);
+        confirmOkBtn.addEventListener('click', () => {
+            if (typeof confirmCallback === 'function') {
+                confirmCallback();
+            }
+            hideConfirmModal();
+        });
+        sortOrderSelect.addEventListener('change', sortAndRenderItems);
+        itemForm.addEventListener('submit', handleFormSubmit);
+
+        // --- ОСНОВНАЯ ЛОГИКА (CRUD) ---
+        function getCollectionPath() {
+             // Если приложение запущено не в Canvas, используем простой путь для локального тестирования
+            if (appId === 'default-app-id') {
+                return `users/${userId}/items`;
+            }
+            // В среде Canvas используем защищенный путь
+            return `artifacts/${appId}/users/${userId}/items`;
+        }
+
+        function getDocPath(docId) {
+            return `${getCollectionPath()}/${docId}`;
+        }
+
+        function listenForItems() {
+            if (!userId) return;
+            if (unsubscribe) unsubscribe(); 
+
+            const itemsCollectionRef = collection(db, getCollectionPath());
+            const q = query(itemsCollectionRef); 
+
+            unsubscribe = onSnapshot(q, (snapshot) => {
+                allItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                sortAndRenderItems();
+                updateStats(allItems);
+            }, (error) => {
+                console.error("Ошибка при прослушивании данных:", error);
+                showMessage(`Ошибка загрузки данных: ${error.message}`, "error");
+            });
+        }
+
+        async function handleFormSubmit(e) {
+            e.preventDefault();
+            if (!userId) {
+                showMessage("Пользователь не аутентифицирован.", "error");
+                return;
+            }
+
+            const id = document.getElementById('itemId').value;
+            const existingItem = allItems.find(item => item.id === id);
+
+            const itemData = {
+                name: document.getElementById('itemName').value,
+                buyerName: document.getElementById('buyerName').value.trim(),
+                buyerPhone: document.getElementById('buyerPhone').value.trim(),
+                totalPrice: parseFloat(document.getElementById('totalPrice').value),
+                downPayment: parseFloat(document.getElementById('downPayment').value),
+                installmentsCount: parseInt(document.getElementById('installmentsCount').value),
+                startDate: document.getElementById('startDate').value,
+                paidPayments: existingItem ? existingItem.paidPayments : [], 
+                updatedAt: serverTimestamp()
+            };
+
+            try {
+                if (id) {
+                    const itemRef = doc(db, getDocPath(id));
+                    await updateDoc(itemRef, itemData);
+                    showMessage("Товар успешно обновлен!", "success");
+                } else {
+                    itemData.createdAt = serverTimestamp();
+                    const collectionRef = collection(db, getCollectionPath());
+                    await addDoc(collectionRef, itemData);
+                    showMessage("Товар успешно добавлен!", "success");
+                }
+                hideModal();
+            } catch (error) {
+                console.error("Ошибка сохранения данных: ", error);
+                showMessage(`Ошибка сохранения: ${error.message}`, "error");
+            }
+        }
+
+        function sortAndRenderItems() {
+            const sortOrder = sortOrderSelect.value;
+            let sortedItems = [...allItems];
+
+            const calculateRemaining = item => {
+                const monthlyPayment = item.installmentsCount > 0 ? (item.totalPrice - item.downPayment) / item.installmentsCount : 0;
+                const paidAmount = item.downPayment + (item.paidPayments?.length || 0) * monthlyPayment;
+                return item.totalPrice - paidAmount;
+            };
+
+            const getNextDueDate = item => {
+                for (let i = 0; i < item.installmentsCount; i++) {
+                    if (!item.paidPayments?.includes(i)) {
+                        const dueDate = new Date(item.startDate);
+                        dueDate.setMonth(dueDate.getMonth() + i);
+                        return dueDate;
+                    }
+                }
+                return new Date('9999-12-31');
+            };
+
+            switch (sortOrder) {
+                case 'name-asc':
+                    sortedItems.sort((a, b) => a.name.localeCompare(b.name));
+                    break;
+                case 'remaining-desc':
+                    sortedItems.sort((a, b) => calculateRemaining(b) - calculateRemaining(a));
+                    break;
+                case 'due-date-asc':
+                    sortedItems.sort((a, b) => getNextDueDate(a) - getNextDueDate(b));
+                    break;
+                case 'date-added-desc':
+                    sortedItems.sort((a, b) => (b.createdAt?.toDate() || 0) - (a.createdAt?.toDate() || 0));
+                    break;
+            }
+            renderItems(sortedItems);
+        }
+
+        const renderItems = (items) => {
+            itemsContainer.innerHTML = '';
+            if (items.length === 0) {
+                noItemsMessage.classList.remove('hidden');
+            } else {
+                noItemsMessage.classList.add('hidden');
+                items.forEach(item => {
+                    const card = createItemCard(item);
+                    itemsContainer.appendChild(card);
+                });
+            }
+        };
+        
+        const createItemCard = (item) => {
+            const monthlyPayment = item.installmentsCount > 0 ? (item.totalPrice - item.downPayment) / item.installmentsCount : 0;
+            const paidPayments = item.paidPayments || [];
+            const paidAmount = item.downPayment + paidPayments.length * monthlyPayment;
+            const remainingAmount = item.totalPrice - paidAmount;
+            const paidPercentage = item.totalPrice > 0 ? (paidAmount / item.totalPrice) * 100 : 0;
+
+            const card = document.createElement('div');
+            card.className = 'bg-gray-800 p-6 rounded-xl shadow-lg flex flex-col justify-between transition-all duration-300 hover:shadow-indigo-500/20 hover:ring-1 hover:ring-indigo-500';
+            
+            let paymentsHtml = '<div class="space-y-2 mt-4 max-h-40 overflow-y-auto pr-2">';
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            for (let i = 0; i < item.installmentsCount; i++) {
+                const paymentDate = new Date(item.startDate);
+                paymentDate.setMonth(paymentDate.getMonth() + i);
+                const isPaid = paidPayments.includes(i);
+                const isOverdue = !isPaid && paymentDate < today;
+
+                let bgColor = 'bg-gray-700/50';
+                let textColor = 'text-gray-300';
+                let icon = 'fa-hourglass-half';
+
+                if (isPaid) {
+                    bgColor = 'bg-green-900/50';
+                    textColor = 'text-green-300';
+                    icon = 'fa-check-circle';
+                } else if (isOverdue) {
+                    bgColor = 'bg-red-900/60';
+                    textColor = 'text-red-300';
+                    icon = 'fa-exclamation-circle';
+                }
+                
+                paymentsHtml += `
+                    <div class="flex justify-between items-center p-2 rounded-md ${bgColor}">
+                        <span class="text-sm ${textColor}">
+                            <i class="fas ${icon} mr-2"></i>
+                            ${paymentDate.toLocaleDateString('ru-RU')}
+                        </span>
+                        <span class="font-semibold ${textColor}">${monthlyPayment.toFixed(2)} BYN</span>
+                        <button class="toggle-payment-btn text-xs py-1 px-2 rounded ${isPaid ? 'bg-yellow-600 hover:bg-yellow-700' : 'bg-green-600 hover:bg-green-700'} text-white" data-item-id="${item.id}" data-payment-index="${i}">
+                            ${isPaid ? 'Отменить' : 'Оплатить'}
+                        </button>
                     </div>
                 `;
-                item.addEventListener('click', () => openModal(image.src));
-                portfolioGrid.appendChild(item);
-            });
-        }
+            }
+            paymentsHtml += '</div>';
 
-        if (portfolioFilters) {
-            siteData.portfolio.categories.forEach(category => {
-                const button = document.createElement('button');
-                button.textContent = category;
-                button.className = 'px-4 py-2 rounded-md text-sm font-medium transition-colors duration-300';
-                if (category === 'Все') {
-                    button.classList.add('bg-indigo-600', 'text-white', 'shadow-md');
-                } else {
-                    button.classList.add('bg-slate-700', 'text-slate-300', 'hover:bg-slate-600');
-                }
-                button.addEventListener('click', (e) => {
-                    currentFilter = category;
-                    document.querySelectorAll('#portfolio-filters button').forEach(btn => {
-                        btn.classList.remove('bg-indigo-600', 'text-white', 'shadow-md');
-                        btn.classList.add('bg-slate-700', 'text-slate-300', 'hover:bg-slate-600');
-                    });
-                    e.currentTarget.classList.add('bg-indigo-600', 'text-white', 'shadow-md');
-                    e.currentTarget.classList.remove('bg-slate-700', 'text-slate-300', 'hover:bg-slate-600');
-                    renderPortfolio();
-                });
-                portfolioFilters.appendChild(button);
-            });
-        }
-        renderPortfolio();
-
-        // Services
-        document.getElementById('services-title').textContent = siteData.services.title;
-        const servicesGrid = document.getElementById('services-grid');
-        siteData.services.packages.forEach(pkg => {
-            const card = document.createElement('div');
-            card.className = 'bg-slate-800 p-8 rounded-2xl shadow-lg flex flex-col border border-slate-700 hover:border-indigo-500 hover:scale-[1.02] transition-all duration-300';
-            let featuresHtml = pkg.features.map(feature => 
-                `<li class="flex items-center gap-3">
-                    <svg class="w-5 h-5 text-indigo-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                    <span>${feature}</span>
-                </li>`
-            ).join('');
+            const buyerInfoHtml = (item.buyerName || item.buyerPhone) ? `
+            <div class="text-sm text-gray-400 my-3 border-t border-b border-gray-700 py-2 space-y-1">
+                ${item.buyerName ? `<div class="flex items-center"><i class="fas fa-user w-4 text-center mr-2 text-gray-500"></i><span>${item.buyerName}</span></div>` : ''}
+                ${item.buyerPhone ? `<div class="flex items-center"><i class="fas fa-phone w-4 text-center mr-2 text-gray-500"></i><span>${item.buyerPhone}</span></div>` : ''}
+            </div>
+            ` : '';
 
             card.innerHTML = `
-                <h3 class="text-2xl font-bold font-heading mb-2">${pkg.name}</h3>
-                <p class="text-3xl font-bold text-indigo-400 mb-4">${pkg.price}</p>
-                <p class="text-slate-400 mb-6 flex-grow">${pkg.description}</p>
-                <ul class="space-y-3 mb-8 text-slate-300">
-                    ${featuresHtml}
-                </ul>
-                <a href="#contact" class="mt-auto btn-secondary w-full text-center">Заказать съемку</a>
+                <div>
+                    <div class="flex justify-between items-start">
+                        <h3 class="text-xl font-bold text-white mb-2">${item.name}</h3>
+                        <div class="flex space-x-2">
+                            <button class="edit-btn text-blue-400 hover:text-blue-300" title="Редактировать"><i class="fas fa-edit"></i></button>
+                            <button class="delete-btn text-red-400 hover:text-red-300" title="Удалить"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                    ${buyerInfoHtml}
+                    <p class="text-sm text-gray-400">Общая стоимость: ${item.totalPrice.toFixed(2)} BYN</p>
+                    
+                    <div class="mt-4">
+                        <div class="flex justify-between text-sm font-medium text-gray-300 mb-1">
+                            <span>Выплачено: ${paidAmount.toFixed(2)} BYN</span>
+                            <span>Остаток: ${remainingAmount.toFixed(2)} BYN</span>
+                        </div>
+                        <div class="w-full bg-gray-700 rounded-full h-2.5">
+                            <div class="bg-indigo-600 h-2.5 rounded-full transition-all duration-500" style="width: ${paidPercentage}%"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-4">
+                    <h4 class="font-semibold text-gray-200 mb-2">График платежей (${monthlyPayment.toFixed(2)} BYN/мес)</h4>
+                    ${paymentsHtml}
+                </div>
             `;
-            servicesGrid.appendChild(card);
-        });
 
-        // Contact
-        document.getElementById('contact-title').textContent = siteData.contact.title;
-        document.getElementById('contact-description').textContent = siteData.contact.description;
-        document.getElementById('contact-email').textContent = siteData.contact.email;
-        document.getElementById('contact-email-link').href = `mailto:${siteData.contact.email}`;
-        document.getElementById('contact-phone').textContent = siteData.contact.phone;
-        document.getElementById('contact-phone-link').href = `tel:${siteData.contact.phone.replace(/[\s()-]/g, '')}`;
-        
-        const socialsContainer = document.getElementById('contact-socials');
-        siteData.contact.socials.forEach(social => {
-            const link = document.createElement('a');
-            link.href = social.url;
-            link.target = '_blank';
-            link.rel = 'noopener noreferrer';
-            link.className = 'text-slate-400 hover:text-white hover:scale-110 transform transition-all duration-300';
-            link.innerHTML = `<span class="sr-only">${social.name}</span>${getSocialIcon(social.name)}`;
-            socialsContainer.appendChild(link);
-        });
-
-        // Footer
-        document.getElementById('footer-year').textContent = new Date().getFullYear();
-        document.getElementById('footer-name').textContent = siteData.photographerName;
-
-        // --- Интерактивность ---
-        // Мобильное меню
-        const mobileMenuButton = document.getElementById('mobile-menu-button');
-        const mobileMenu = document.getElementById('mobile-menu');
-        mobileMenuButton.addEventListener('click', () => {
-            mobileMenu.classList.toggle('hidden');
-        });
-        document.querySelectorAll('#mobile-menu a').forEach(link => {
-            link.addEventListener('click', () => mobileMenu.classList.add('hidden'));
-        });
-
-        // Модальное окно
-        const modal = document.getElementById('image-modal');
-        const modalContent = document.querySelector('.modal-content');
-        const modalImg = document.getElementById('modal-img');
-        const closeModalBtn = document.getElementById('modal-close');
-
-        function openModal(src) {
-            modalImg.src = src;
-            modal.classList.remove('pointer-events-none');
-            modal.classList.add('opacity-100');
-            modalContent.classList.remove('scale-95', 'opacity-0');
-            modalContent.classList.add('scale-100', 'opacity-100');
-            document.body.style.overflow = 'hidden';
-        }
-
-        function closeModal() {
-            modal.classList.remove('opacity-100');
-            modal.classList.add('pointer-events-none');
-            modalContent.classList.add('scale-95', 'opacity-0');
-            document.body.style.overflow = 'auto';
-        }
-
-        closeModalBtn.addEventListener('click', closeModal);
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) closeModal();
-        });
-        
-        function getSocialIcon(name) {
-            const icons = {
-                'Telegram': '<svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" viewBox="0 0 24 24" fill="currentColor"><path d="M21.926 3.117a2.33 2.33 0 0 0-2.15-1.09.434.434 0 0 0-.341.034L2.023 8.488a1.86 1.86 0 0 0-1.5 2.544 1.83 1.83 0 0 0 .584 1.02l4.368 3.021a.43.43 0 0 0 .521-.045l1.76-1.635a.433.433 0 0 1 .633-.02l2.45 1.84a1.86 1.86 0 0 0 2.628.256l5.48-3.957a.434.434 0 0 1 .59.028.43.43 0 0 1 .033.58l-4.48 5.96a1.86 1.86 0 0 0 .33 2.57l2.83 2.12a1.86 1.86 0 0 0 2.94-.925l3.007-14.23a2.33 2.33 0 0 0-1.28-2.545Z"/></svg>',
-                'Instagram': '<svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.85s-.011 3.584-.069 4.85c-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07s-3.584-.012-4.85-.07c-3.252-.148-4.771-1.691-4.919-4.919-.058-1.265-.069-1.645-.069-4.85s.011-3.584.069-4.85c.149-3.225 1.664-4.771 4.919-4.919C8.416 2.175 8.796 2.163 12 2.163zm0 1.802c-3.143 0-3.504.012-4.726.068-2.694.124-3.89 1.313-4.017 4.016-.056 1.222-.067 1.57-.067 4.726s.011 3.504.067 4.726c.127 2.704 1.323 3.89 4.017 4.017 1.222.056 1.583.067 4.726.067s3.504-.011 4.726-.067c2.694-.127 3.89-1.323 4.017-4.017.056-1.222.067-1.57.067-4.726s-.011-3.504-.067-4.726c-.127-2.703-1.323-3.89-4.017-4.016-1.222-.056-1.583-.068-4.726-.068zm0 3.064c-2.883 0-5.206 2.323-5.206 5.207s2.323 5.207 5.206 5.207 5.207-2.323 5.207-5.207-2.324-5.207-5.207-5.207zm0 8.611c-1.873 0-3.401-1.528-3.401-3.401s1.528-3.401 3.401-3.401 3.401 1.528 3.401 3.401-1.528 3.401-3.401 3.401zm6.406-8.91c-.962 0-1.742.78-1.742 1.742s.78 1.742 1.742 1.742 1.742-.78 1.742-1.742-.78-1.742-1.742-1.742z"/></svg>',
-                'VK': '<svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M13.125 12.375c0-1.25.938-2.125 2.125-2.125h1.25V7.5h-2.5c-2.5 0-4.375 1.5-4.375 3.875v1.75H7.5v2.75h2.125V21h3.25v-5.125h2.375l.375-2.75h-2.75v-1.75z"/></svg>'
-            };
-            return icons[name] || '';
-        }
-
-        // Анимация при скролле
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('is-visible');
-                }
+            card.querySelector('.edit-btn').addEventListener('click', () => showModal(true, item));
+            card.querySelector('.delete-btn').addEventListener('click', () => {
+                showConfirmModal(`Вы уверены, что хотите удалить "${item.name}"?`, async () => {
+                    try {
+                        await deleteDoc(doc(db, getDocPath(item.id)));
+                        showMessage("Товар успешно удален!", "success");
+                    } catch (error) {
+                        console.error("Ошибка удаления: ", error);
+                        showMessage(`Ошибка удаления: ${error.message}`, "error");
+                    }
+                });
             });
-        }, { threshold: 0.1 });
+            card.querySelectorAll('.toggle-payment-btn').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const paymentIndex = parseInt(e.target.dataset.paymentIndex);
+                    const itemRef = doc(db, getDocPath(item.id));
+                    const currentItem = allItems.find(i => i.id === item.id);
+                    const paidPayments = currentItem.paidPayments || [];
+                    const isPaid = paidPayments.includes(paymentIndex);
+                    let newPaidPayments = isPaid ? paidPayments.filter(p => p !== paymentIndex) : [...paidPayments, paymentIndex];
+                    
+                    try {
+                        await updateDoc(itemRef, { paidPayments: newPaidPayments });
+                        showMessage("Статус платежа обновлен!", "success");
+                    } catch (error) {
+                        console.error("Ошибка обновления платежа: ", error);
+                        showMessage(`Ошибка обновления: ${error.message}`, "error");
+                    }
+                });
+            });
 
-        document.querySelectorAll('section').forEach(section => {
-            if(section.id !== 'hero') { // Не анимируем первую секцию
-                 section.classList.add('fade-in-section');
-                 observer.observe(section);
-            }
-        });
-    });
+            return card;
+        };
+        
+        const updateStats = (items) => {
+            let totalAmount = 0;
+            let totalPaid = 0;
+            
+            items.forEach(item => {
+                const monthlyPayment = item.installmentsCount > 0 ? (item.totalPrice - item.downPayment) / item.installmentsCount : 0;
+                const paidPayments = item.paidPayments || [];
+                const paidAmount = item.downPayment + paidPayments.length * monthlyPayment;
+                totalAmount += item.totalPrice;
+                totalPaid += paidAmount;
+            });
+            
+            const totalRemaining = totalAmount - totalPaid;
+            
+            totalAmountEl.textContent = `${totalAmount.toFixed(2)} BYN`;
+            totalPaidEl.textContent = `${totalPaid.toFixed(2)} BYN`;
+            totalRemainingEl.textContent = `${totalRemaining.toFixed(2)} BYN`;
+        };
+        
+        // --- ЗАПУСК ПРИЛОЖЕНИЯ ---
+        main();
     </script>
 </body>
 </html>
