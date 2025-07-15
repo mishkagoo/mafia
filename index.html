@@ -69,7 +69,8 @@
                         <button id="addRectTableBtn" class="w-full bg-emerald-600 text-white py-2 rounded-lg hover:bg-emerald-700 transition shadow-md font-semibold">Добавить прямоугольный стол</button>
                         <button id="addRoundTableBtn" class="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition shadow-md font-semibold">Добавить круглый стол</button>
                         <hr class="my-4">
-                        <button id="exportBtn" class="w-full bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 transition shadow-md font-semibold">Экспортировать для бота</button>
+                        <button id="saveBtn" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition shadow-md font-semibold">Сохранить в браузере</button>
+                        <button id="resetBtn" class="w-full bg-gray-400 text-white py-2 rounded-lg hover:bg-gray-500 transition shadow-md font-semibold">Сбросить</button>
                         <button id="printBtn" class="w-full bg-sky-600 text-white py-2 rounded-lg hover:bg-sky-700 transition shadow-md font-semibold mt-2">Печать</button>
                     </div>
                 </div>
@@ -88,7 +89,8 @@
         const addGuestBtn = document.getElementById('addGuestBtn');
         const addRectTableBtn = document.getElementById('addRectTableBtn');
         const addRoundTableBtn = document.getElementById('addRoundTableBtn');
-        const exportBtn = document.getElementById('exportBtn');
+        const saveBtn = document.getElementById('saveBtn');
+        const resetBtn = document.getElementById('resetBtn');
         const printBtn = document.getElementById('printBtn');
         const unseatedGuestsContainer = document.getElementById('unseatedGuests');
         const tablesArea = document.getElementById('tablesArea');
@@ -292,42 +294,48 @@
             render();
         }
 
-        function unicodeToBase64(str) {
-            return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g,
-                function toSolidBytes(match, p1) {
-                    return String.fromCharCode('0x' + p1);
-            }));
+        // --- State Management ---
+        function saveState(storageKey) {
+            const stateToSave = { guests: guests, tables: tables, nextTableId: nextTableId, nextGuestId: nextGuestId };
+            try {
+                localStorage.setItem(storageKey, JSON.stringify(stateToSave));
+                const originalText = saveBtn.textContent;
+                saveBtn.textContent = 'Сохранено! ✅';
+                saveBtn.classList.replace('bg-blue-600', 'bg-green-500');
+                saveBtn.classList.replace('hover:bg-blue-700', 'hover:bg-green-600');
+                setTimeout(() => {
+                    saveBtn.textContent = originalText;
+                    saveBtn.classList.replace('bg-green-500', 'bg-blue-600');
+                    saveBtn.classList.replace('hover:bg-green-600', 'hover:bg-blue-700');
+                }, 2000);
+            } catch (e) {
+                console.error("Failed to save state:", e);
+                alert("Не удалось сохранить состояние.");
+            }
         }
 
-        function exportState() {
-            const stateToSave = { guests: guests, tables: tables };
-            const jsonString = JSON.stringify(stateToSave);
-            const base64String = unicodeToBase64(jsonString);
-            const command = `/import_seating ${base64String}`;
-            
-            navigator.clipboard.writeText(command).then(() => {
-                const originalText = exportBtn.innerHTML;
-                exportBtn.innerHTML = 'Скопировано! ✅';
-                exportBtn.classList.replace('bg-purple-600', 'bg-green-500');
-                setTimeout(() => {
-                    exportBtn.innerHTML = originalText;
-                    exportBtn.classList.replace('bg-green-500', 'bg-purple-600');
-                }, 2000);
-            }, (err) => {
-                console.error('Could not copy text: ', err);
-                alert('Не удалось скопировать. Пожалуйста, скопируйте вручную.');
-                prompt("Команда для бота:", command);
-            });
+        function loadState(storageKey) {
+            const savedData = localStorage.getItem(storageKey);
+            if (savedData) {
+                try {
+                    return JSON.parse(savedData);
+                } catch (e) {
+                    localStorage.removeItem(storageKey);
+                    return null;
+                }
+            }
+            return null;
         }
         
-        function initializeApp(initialData) {
-            if (initialData && initialData.guests) {
-                guests = initialData.guests;
-                tables = initialData.tables || [];
-                nextGuestId = guests.length;
-                nextTableId = tables.length;
-            } else if (initialData) { // Fallback for old format
-                initialData.forEach((name, index) => addGuest(name, `guest-initial-${index}`));
+        function initializeApp(initialData, storageKey) {
+            const savedState = loadState(storageKey);
+            if (savedState) {
+                guests = savedState.guests;
+                tables = savedState.tables;
+                nextGuestId = savedState.nextGuestId || guests.length;
+                nextTableId = savedState.nextTableId || tables.length;
+            } else {
+                initialData.guests.forEach((name, index) => addGuest(name, `guest-initial-${index}`));
                 addTable('rectangle');
             }
             
@@ -335,9 +343,14 @@
             guestNameInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') { addGuest(guestNameInput.value); render(); }});
             addRectTableBtn.addEventListener('click', () => addTable('rectangle'));
             addRoundTableBtn.addEventListener('click', () => addTable('round'));
-            exportBtn.addEventListener('click', exportState);
+            saveBtn.addEventListener('click', () => saveState(storageKey));
             printBtn.addEventListener('click', () => window.print());
-            
+            resetBtn.addEventListener('click', () => {
+                if (confirm("Вы уверены, что хотите сбросить все изменения? Это действие удалит сохраненную рассадку и вернет первоначальный список гостей.")) {
+                    localStorage.removeItem(storageKey);
+                    window.location.reload();
+                }
+            });
             unseatedGuestsContainer.addEventListener('dragover', handleDragOver);
             unseatedGuestsContainer.addEventListener('dragenter', handleDragEnter);
             unseatedGuestsContainer.addEventListener('dragleave', handleDragLeave);
@@ -362,13 +375,14 @@
         window.onload = () => {
             const urlParams = new URLSearchParams(window.location.search);
             const dataParam = urlParams.get('data');
+            const storageKey = `seatingPlan_${dataParam}`;
 
             if (dataParam) {
                 try {
                     const decodedJson = b64DecodeUnicode(dataParam);
                     if (decodedJson) {
                         const initialData = JSON.parse(decodedJson);
-                        initializeApp(initialData);
+                        initializeApp(initialData, storageKey);
                     } else { throw new Error("Decoded JSON is null"); }
                 } catch (e) {
                     console.error("Failed to parse data from URL:", e);
