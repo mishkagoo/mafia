@@ -3,714 +3,351 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Учет Рассрочек</title>
-    
+    <title>План рассадки гостей</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-
+    <link href="https://fonts.googleapis.com/css2?family=Marck+Script&family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: #111827;
-            color: #e5e7eb;
+            font-family: 'Montserrat', sans-serif;
+            background-color: #fdfaf6;
         }
-        .modal-backdrop {
-            background-color: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(4px);
+        .font-handwriting {
+            font-family: 'Marck Script', cursive;
         }
-        .fade-in {
-            animation: fadeIn 0.3s ease-out;
+        .guest-card {
+            cursor: grab;
+            transition: all 0.2s ease-in-out;
+            touch-action: none;
+            position: relative;
         }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: scale(0.95); }
-            to { opacity: 1; transform: scale(1.0); }
+        .guest-card:active {
+            cursor: grabbing;
+            transform: scale(1.05);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #1f2937; }
-        ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
-        .loader {
-            border: 4px solid #374151;
-            border-top: 4px solid #6366f1;
+        .seat {
+            transition: all 0.2s ease-in-out;
+            border: 2px dashed #d1d5db;
+        }
+        .seat.drag-over {
+            background-color: #e0f2fe;
+            border-color: #38bdf8;
+        }
+        .table-container {
+            background-color: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+        .unseated-container {
+             min-height: 150px;
+        }
+        .round-table .seats-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            margin: 1rem auto;
+            border: 4px solid #c7d2fe;
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
+            background-color: #eef2ff;
         }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        .round-table .seat {
+            position: absolute;
+            transform: translate(-50%, -50%);
         }
-        .message-box {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-weight: 500;
-            z-index: 1000;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-            opacity: 0;
-            transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
-            visibility: hidden;
-        }
-        .message-box.show {
-            opacity: 1;
-            transform: translateX(-50%) translateY(0);
-            visibility: visible;
-        }
-        .message-box.success { background-color: #10B981; color: white; }
-        .message-box.error { background-color: #EF4444; color: white; }
     </style>
 </head>
-<body class="antialiased">
+<body class="text-gray-700">
 
-    <div id="loader" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/80">
-        <div class="loader"></div>
+    <div id="loader" class="fixed inset-0 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center z-50">
+        <h2 class="font-handwriting text-4xl text-amber-800 mb-4">Загрузка данных...</h2>
+        <div class="animate-spin rounded-full h-16 w-16 border-b-4 border-amber-700"></div>
     </div>
 
-    <!-- Экран входа -->
-    <div id="loginContainer" class="fixed inset-0 z-40 flex items-center justify-center bg-gray-900 text-center hidden">
-        <div class="bg-gray-800 p-8 rounded-xl shadow-2xl fade-in">
-            <h1 class="text-3xl font-bold text-white mb-2">Учет Рассрочек</h1>
-            <p class="text-gray-400 mb-6">Войдите, чтобы продолжить</p>
-            <button id="signInBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-transform transform hover:scale-105 flex items-center mx-auto disabled:opacity-50 disabled:cursor-wait">
-                <i id="signInIcon" class="fab fa-google mr-3"></i>
-                <span id="signInText">Войти с помощью Google</span>
-            </button>
-        </div>
-    </div>
-
-    <div id="app" class="container mx-auto p-4 md:p-8 max-w-7xl hidden">
-
-        <header class="flex flex-wrap justify-between items-center mb-8">
-            <div>
-                <h1 class="text-3xl md:text-4xl font-bold text-white">Мои Рассрочки</h1>
-                <p class="text-gray-400 mt-1">Панель для отслеживания платежей по товарам.</p>
-            </div>
-            <div id="userInfo" class="flex items-center gap-4 mt-4 md:mt-0">
-                 <img id="userPhoto" src="" alt="User Photo" class="w-10 h-10 rounded-full bg-gray-700">
-                 <div>
-                    <span id="userName" class="font-medium text-white block"></span>
-                    <button id="signOutBtn" class="text-sm text-indigo-400 hover:text-indigo-300 transition">Выйти</button>
-                 </div>
-            </div>
+    <div id="app" class="container mx-auto p-4 md:p-8 hidden">
+        <header class="text-center mb-8">
+            <h1 class="font-handwriting text-5xl md:text-7xl text-amber-800">План рассадки</h1>
+            <p class="text-lg text-gray-500 mt-2">Организуйте идеальное размещение гостей</p>
         </header>
 
-        <div class="flex flex-wrap justify-between items-center mb-8 gap-4">
-            <div>
-                <label for="sortOrder" class="text-sm font-medium text-gray-400 mr-2">Сортировать по:</label>
-                <select id="sortOrder" class="bg-gray-700 border-gray-600 rounded-md shadow-sm text-white focus:ring-indigo-500 focus:border-indigo-500">
-                    <option value="date-added-desc">Дате добавления (новые)</option>
-                    <option value="name-asc">Названию (А-Я)</option>
-                    <option value="remaining-desc">Остатку (убыв.)</option>
-                    <option value="due-date-asc">Дате платежа (ближ.)</option>
-                </select>
-            </div>
-            <button id="openModalBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-transform transform hover:scale-105">
-                <i class="fas fa-plus mr-2"></i>Добавить товар
-            </button>
-        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <aside class="lg:col-span-1 space-y-6">
+                
+                <div class="bg-green-100 p-6 rounded-2xl shadow-lg no-print">
+                    <h2 class="font-handwriting text-3xl text-green-800 mb-4">Посадить вместе 💚</h2>
+                    <ul id="goodPairsList" class="space-y-2 text-green-900">
+                        <!-- Good pairs will be inserted here -->
+                    </ul>
+                </div>
+                <div class="bg-red-100 p-6 rounded-2xl shadow-lg no-print">
+                    <h2 class="font-handwriting text-3xl text-red-800 mb-4">Не садить вместе 💔</h2>
+                    <ul id="badPairsList" class="space-y-2 text-red-900">
+                        <!-- Bad pairs will be inserted here -->
+                    </ul>
+                </div>
 
-        <div id="stats" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div class="bg-gray-800 p-6 rounded-xl shadow-lg">
-                <h3 class="text-lg font-semibold text-gray-400">Общая Сумма</h3>
-                <p id="totalAmount" class="text-3xl font-bold text-white mt-2">0.00 BYN</p>
-            </div>
-            <div class="bg-gray-800 p-6 rounded-xl shadow-lg">
-                <h3 class="text-lg font-semibold text-gray-400">Выплачено</h3>
-                <p id="totalPaid" class="text-3xl font-bold text-green-400 mt-2">0.00 BYN</p>
-            </div>
-            <div class="bg-gray-800 p-6 rounded-xl shadow-lg">
-                <h3 class="text-lg font-semibold text-gray-400">Остаток</h3>
-                <p id="totalRemaining" class="text-3xl font-bold text-red-400 mt-2">0.00 BYN</p>
-            </div>
-        </div>
-        
-        <div id="itemsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        </div>
-        
-        <div id="noItemsMessage" class="hidden text-center py-16 bg-gray-800 rounded-xl">
-            <i class="fas fa-box-open fa-3x text-gray-500 mb-4"></i>
-            <h2 class="text-xl font-semibold text-white">Товаров пока нет</h2>
-            <p class="text-gray-400">Нажмите "Добавить товар", чтобы начать.</p>
-        </div>
+                <div id="unseated-container" class="unseated-container bg-white p-6 rounded-2xl shadow-lg">
+                    <h2 class="font-handwriting text-3xl text-amber-800 mb-4">Гости без места</h2>
+                    <div id="unseatedGuests" class="space-y-2 min-h-[100px] p-2 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
+                        <!-- Unseated guests will be inserted here -->
+                    </div>
+                </div>
 
-    </div>
+                 <div class="bg-white p-6 rounded-2xl shadow-lg no-print">
+                    <h2 class="font-handwriting text-3xl text-amber-800 mb-4">Инструменты</h2>
+                    <div class="space-y-3">
+                        <button id="addRectTableBtn" class="w-full bg-emerald-600 text-white py-2 rounded-lg hover:bg-emerald-700 transition shadow-md font-semibold">Добавить прямоугольный стол</button>
+                        <button id="addRoundTableBtn" class="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition shadow-md font-semibold">Добавить круглый стол</button>
+                    </div>
+                </div>
 
-    <!-- Модальное окно для добавления/редактирования товара -->
-    <div id="itemModal" class="fixed inset-0 z-50 flex items-center justify-center modal-backdrop hidden">
-        <div class="bg-gray-800 rounded-xl shadow-2xl w-full max-w-lg m-4 fade-in max-h-[90vh] overflow-y-auto">
-            <div class="p-6 border-b border-gray-700 flex justify-between items-center">
-                <h2 id="modalTitle" class="text-2xl font-bold text-white">Добавить новый товар</h2>
-                <button id="closeModalBtn" class="text-gray-400 hover:text-white text-2xl leading-none">&times;</button>
-            </div>
-            <form id="itemForm" class="p-6 space-y-4">
-                <input type="hidden" id="itemId">
-                <div>
-                    <label for="itemName" class="block text-sm font-medium text-gray-300">Название товара</label>
-                    <input type="text" id="itemName" class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md shadow-sm text-white focus:ring-indigo-500 focus:border-indigo-500" required>
-                </div>
-                <div>
-                    <label for="buyerName" class="block text-sm font-medium text-gray-300">ФИО покупателя</label>
-                    <input type="text" id="buyerName" class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md shadow-sm text-white focus:ring-indigo-500 focus:border-indigo-500" placeholder="Иванов Иван Иванович">
-                </div>
-                <div>
-                    <label for="buyerPhone" class="block text-sm font-medium text-gray-300">Номер телефона</label>
-                    <input type="tel" id="buyerPhone" class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md shadow-sm text-white focus:ring-indigo-500 focus:border-indigo-500" placeholder="+375 (29) 123-45-67">
-                </div>
-                <div>
-                    <label for="totalPrice" class="block text-sm font-medium text-gray-300">Общая стоимость (BYN)</label>
-                    <input type="number" id="totalPrice" min="0" step="0.01" class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md shadow-sm text-white focus:ring-indigo-500 focus:border-indigo-500" required>
-                </div>
-                <div>
-                    <label for="downPayment" class="block text-sm font-medium text-gray-300">Первоначальный взнос (BYN)</label>
-                    <input type="number" id="downPayment" min="0" step="0.01" class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md shadow-sm text-white focus:ring-indigo-500 focus:border-indigo-500" required>
-                </div>
-                <div>
-                    <label for="installmentsCount" class="block text-sm font-medium text-gray-300">Количество платежей (мес.)</label>
-                    <input type="number" id="installmentsCount" min="1" class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md shadow-sm text-white focus:ring-indigo-500 focus:border-indigo-500" required>
-                </div>
-                 <div>
-                    <label for="startDate" class="block text-sm font-medium text-gray-300">Дата первого платежа</label>
-                    <input type="date" id="startDate" class="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md shadow-sm text-white focus:ring-indigo-500 focus:border-indigo-500" required>
-                </div>
-                <div class="pt-4 flex justify-end space-x-3">
-                    <button type="button" id="cancelBtn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition">Отмена</button>
-                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition">Сохранить</button>
-                </div>
-            </form>
+            </aside>
+
+            <main id="tablesArea" class="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 items-start">
+                <!-- Tables will be rendered here -->
+            </main>
         </div>
     </div>
 
-    <!-- Модальное окно подтверждения -->
-    <div id="confirmModal" class="fixed inset-0 z-50 flex items-center justify-center modal-backdrop hidden">
-        <div class="bg-gray-800 rounded-xl shadow-2xl w-full max-w-sm m-4 fade-in">
-            <div class="p-6 text-center">
-                <i class="fas fa-exclamation-triangle text-yellow-400 text-4xl mb-4"></i>
-                <h3 id="confirmModalTitle" class="text-lg font-semibold text-white">Подтвердите действие</h3>
-                <p id="confirmModalText" class="text-gray-300 mt-2 mb-6">Вы уверены?</p>
-                <div class="flex justify-center space-x-4">
-                    <button id="confirmCancelBtn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-lg transition">Отмена</button>
-                    <button id="confirmOkBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg transition">Удалить</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="messageBox" class="message-box"></div>
-    
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { 
-            getAuth, 
-            onAuthStateChanged, 
-            GoogleAuthProvider, 
-            signInWithRedirect, 
-            getRedirectResult,
-            signOut,
-            signInAnonymously,
-            signInWithCustomToken
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { 
-            getFirestore, 
-            collection, 
-            doc, 
-            addDoc, 
-            onSnapshot, 
-            updateDoc, 
-            deleteDoc, 
-            serverTimestamp, 
-            query,
-            setLogLevel
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // --- ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ И ИНИЦИАЛИЗАЦИЯ ---
-        let app, db, auth;
-        let userId = null;
-        let appId;
-        let allItems = [];
-        let confirmCallback = null;
-        let unsubscribe;
-
-        // --- ЭЛЕМЕНТЫ DOM ---
+    <script>
+        // --- DOM Elements ---
         const loader = document.getElementById('loader');
-        const loginContainer = document.getElementById('loginContainer');
-        const signInBtn = document.getElementById('signInBtn');
-        const signOutBtn = document.getElementById('signOutBtn');
-        const userPhoto = document.getElementById('userPhoto');
-        const userName = document.getElementById('userName');
         const appContainer = document.getElementById('app');
-        const itemsContainer = document.getElementById('itemsContainer');
-        const openModalBtn = document.getElementById('openModalBtn');
-        const closeModalBtn = document.getElementById('closeModalBtn');
-        const cancelBtn = document.getElementById('cancelBtn');
-        const itemModal = document.getElementById('itemModal');
-        const itemForm = document.getElementById('itemForm');
-        const modalTitle = document.getElementById('modalTitle');
-        const noItemsMessage = document.getElementById('noItemsMessage');
-        const totalAmountEl = document.getElementById('totalAmount');
-        const totalPaidEl = document.getElementById('totalPaid');
-        const totalRemainingEl = document.getElementById('totalRemaining');
-        const sortOrderSelect = document.getElementById('sortOrder');
-        const messageBox = document.getElementById('messageBox');
-        const confirmModal = document.getElementById('confirmModal');
-        const confirmModalText = document.getElementById('confirmModalText');
-        const confirmCancelBtn = document.getElementById('confirmCancelBtn');
-        const confirmOkBtn = document.getElementById('confirmOkBtn');
+        const addRectTableBtn = document.getElementById('addRectTableBtn');
+        const addRoundTableBtn = document.getElementById('addRoundTableBtn');
+        const unseatedGuestsContainer = document.getElementById('unseatedGuests');
+        const tablesArea = document.getElementById('tablesArea');
+        const goodPairsList = document.getElementById('goodPairsList');
+        const badPairsList = document.getElementById('badPairsList');
 
-        // --- УПРАВЛЕНИЕ UI ---
-        const showMessage = (message, type = 'success') => {
-            messageBox.textContent = message;
-            messageBox.className = `message-box show ${type}`;
-            setTimeout(() => {
-                messageBox.classList.remove('show');
-            }, 3000);
-        };
+        // --- State ---
+        let guests = [];
+        let tables = [];
+        let nextGuestId = 0;
+        let nextTableId = 0;
+        let draggedGuestId = null;
 
-        const setLoginButtonState = (isLoading) => {
-            const icon = document.getElementById('signInIcon');
-            const text = document.getElementById('signInText');
-            signInBtn.disabled = isLoading;
-            if (isLoading) {
-                icon.className = 'fas fa-spinner fa-spin mr-3';
-                text.textContent = 'Вход...';
-            } else {
-                icon.className = 'fab fa-google mr-3';
-                text.textContent = 'Войти с помощью Google';
-            }
-        };
-        
-        const showModal = (isEdit = false, item = null) => {
-            itemForm.reset();
-            if (isEdit && item) {
-                modalTitle.textContent = 'Редактировать товар';
-                document.getElementById('itemId').value = item.id;
-                document.getElementById('itemName').value = item.name;
-                document.getElementById('buyerName').value = item.buyerName || '';
-                document.getElementById('buyerPhone').value = item.buyerPhone || '';
-                document.getElementById('totalPrice').value = item.totalPrice;
-                document.getElementById('downPayment').value = item.downPayment;
-                document.getElementById('installmentsCount').value = item.installmentsCount;
-                document.getElementById('startDate').value = item.startDate;
-            } else {
-                modalTitle.textContent = 'Добавить новый товар';
-                document.getElementById('itemId').value = '';
-                document.getElementById('startDate').valueAsDate = new Date();
-            }
-            itemModal.classList.remove('hidden');
-        };
+        // --- Functions ---
+        function addGuest(name, id = null) {
+            if (!name.trim()) return;
+            const guest = { id: id || `guest-${nextGuestId++}`, name: name.trim(), tableId: null, seatId: null };
+            guests.push(guest);
+        }
 
-        const hideModal = () => itemModal.classList.add('hidden');
-        
-        const showConfirmModal = (text, onConfirm) => {
-            confirmModalText.textContent = text;
-            confirmCallback = onConfirm;
-            confirmModal.classList.remove('hidden');
-        };
-        const hideConfirmModal = () => confirmModal.classList.add('hidden');
-
-        // --- ИНИЦИАЛИЗАЦИЯ FIREBASE И АУТЕНТИФИКАЦИЯ ---
-        async function main() {
-            appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-            
-            // ИСПРАВЛЕНО: Добавлен блок конфигурации для локального запуска.
-            // При запуске на вашем компьютере, убедитесь, что здесь указаны ВАШИ данные из Firebase.
-            const localFirebaseConfig = {
-                apiKey: "AIzaSyBr-Wtkvh3WxVGc28nIfoUNooqCQfkOi0c",
-                authDomain: "rassrochki-132d1.firebaseapp.com",
-                projectId: "rassrochki-132d1",
-                storageBucket: "rassrochki-132d1.appspot.com", // Исправлено на .appspot.com
-                messagingSenderId: "914541016991",
-                appId: "1:914541016991:web:9ebec5f8da20fd9668afaa"
+        function addTable(shape) {
+            const table = {
+                id: `table-${nextTableId++}`,
+                name: `Стол №${nextTableId}`,
+                seats: shape === 'round' ? 8 : 6,
+                shape: shape
             };
+            tables.push(table);
+            render();
+        }
 
-            // 1. Инициализация Firebase
-            try {
-                // Проверяем, предоставлена ли конфигурация средой (Canvas)
-                const firebaseConfig = typeof __firebase_config !== 'undefined' 
-                    ? JSON.parse(__firebase_config) 
-                    : localFirebaseConfig;
+        function findGuestById(guestId) {
+            return guests.find(g => g.id === guestId);
+        }
 
-                // Проверка, что конфигурация заполнена
-                if (!firebaseConfig.apiKey || firebaseConfig.apiKey.startsWith("AIzaSyA")) {
-                     console.warn("Пожалуйста, убедитесь, что вы заполнили конфигурацию Firebase в файле HTML для локального тестирования.");
-                }
+        function createGuestElement(guest) {
+            const div = document.createElement('div');
+            div.id = guest.id;
+            div.className = 'guest-card bg-amber-100 text-amber-800 p-3 rounded-lg shadow-sm text-center font-medium w-full text-sm';
+            div.draggable = true;
+            div.textContent = guest.name;
+            div.addEventListener('dragstart', handleDragStart);
+            return div;
+        }
+        
+        function createTableElement(table) {
+            const tableWrapper = document.createElement('div');
+            tableWrapper.id = table.id;
+            tableWrapper.className = `table-container p-4 sm:p-6 rounded-2xl shadow-xl space-y-4 ${table.shape === 'round' ? 'round-table' : ''}`;
 
-                app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-                setLogLevel('debug');
-                console.log("Firebase успешно инициализирован.");
-            } catch (e) {
-                console.error("Критическая ошибка инициализации Firebase:", e);
-                loader.innerHTML = `<div class="text-center p-8 text-red-500">Ошибка: ${e.message}. Убедитесь, что вы правильно скопировали конфигурацию вашего проекта из Firebase в объект 'localFirebaseConfig' в этом файле.</div>`;
-                return;
-            }
-
-            // 2. Обработка результата перенаправления от Google
-            try {
-                setLoginButtonState(true);
-                const result = await getRedirectResult(auth);
-                if (result) {
-                    console.log("Результат перенаправления получен:", result.user);
-                    showMessage(`Добро пожаловать, ${result.user.displayName}!`, "success");
-                }
-            } catch (error) {
-                console.error("Ошибка при получении результата перенаправления:", error);
-                showMessage(`Ошибка входа: ${error.code} - ${error.message}`, "error");
-            } finally {
-                setLoginButtonState(false);
-            }
+            const header = document.createElement('div');
+            header.className = 'flex justify-between items-center';
             
-            // 3. Проверка токена и состояния аутентификации
-            try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                     console.log("Обнаружен токен, попытка входа...");
-                     await signInWithCustomToken(auth, __initial_auth_token);
-                } else if (!auth.currentUser) {
-                    console.log("Токен не найден. Пользователь должен войти.");
-                }
-            } catch (error) {
-                console.error("Ошибка при входе с токеном или анонимно:", error);
-                showMessage("Ошибка сессии, обновите страницу.", "error");
-            }
+            const tableName = document.createElement('input');
+            tableName.type = 'text';
+            tableName.value = table.name;
+            tableName.className = 'font-handwriting text-2xl sm:text-3xl text-emerald-800 bg-transparent w-full focus:outline-none focus:bg-emerald-50 rounded-md p-1';
+            tableName.addEventListener('change', (e) => {
+                const tableToUpdate = tables.find(t => t.id === table.id);
+                tableToUpdate.name = e.target.value;
+            });
 
-
-            // 4. Установка слушателя изменения состояния аутентификации
-            onAuthStateChanged(auth, (user) => {
-                loader.classList.add('hidden');
-                if (user && !user.isAnonymous) {
-                    userId = user.uid;
-                    userName.textContent = user.displayName || 'Пользователь';
-                    userPhoto.src = user.photoURL || `https://placehold.co/40x40/64748b/e2e8f0?text=${user.displayName?.[0] || 'U'}`;
-                    userPhoto.onerror = () => { userPhoto.src = 'https://placehold.co/40x40/64748b/e2e8f0?text=U'; };
-
-                    loginContainer.classList.add('hidden');
-                    appContainer.classList.remove('hidden');
-                    
-                    console.log("Пользователь аутентифицирован:", userId);
-                    listenForItems();
-                } else {
-                    userId = null;
-                    if (unsubscribe) {
-                        unsubscribe(); 
+            const deleteBtn = document.createElement('button');
+            deleteBtn.innerHTML = '&#x2716;';
+            deleteBtn.className = 'text-red-400 hover:text-red-600 font-bold text-xl transition no-print';
+            deleteBtn.title = 'Удалить стол';
+            deleteBtn.onclick = () => {
+                guests.forEach(g => {
+                    if (g.tableId === table.id) {
+                        g.tableId = null;
+                        g.seatId = null;
                     }
-                    allItems = [];
-                    renderItems(allItems);
-                    updateStats(allItems);
+                });
+                tables = tables.filter(t => t.id !== table.id);
+                render();
+            };
+            
+            header.appendChild(tableName);
+            header.appendChild(deleteBtn);
 
-                    appContainer.classList.add('hidden');
-                    loginContainer.classList.remove('hidden');
-                    console.log("Пользователь не аутентифицирован.");
+            const seatsContainer = document.createElement('div');
+            seatsContainer.className = 'seats-container';
+            if (table.shape === 'rectangle') {
+                seatsContainer.classList.add('grid', 'grid-cols-2', 'gap-2', 'sm:gap-3');
+            }
+
+            for (let i = 0; i < table.seats; i++) {
+                const seatId = `${table.id}-seat-${i}`;
+                const seat = document.createElement('div');
+                seat.id = seatId;
+                seat.className = 'seat h-14 w-20 sm:h-16 sm:w-24 rounded-lg flex items-center justify-center';
+                seat.dataset.tableId = table.id;
+                seat.dataset.seatId = seatId;
+                
+                if (table.shape === 'round') {
+                    const angle = (i / table.seats) * 2 * Math.PI - (Math.PI / 2);
+                    const radius = 45;
+                    const x = 50 + radius * Math.cos(angle);
+                    const y = 50 + radius * Math.sin(angle);
+                    seat.style.left = `${x}%`;
+                    seat.style.top = `${y}%`;
                 }
+
+                const seatedGuest = guests.find(g => g.seatId === seatId);
+                if (seatedGuest) {
+                    seat.appendChild(createGuestElement(seatedGuest));
+                    seat.classList.remove('border-dashed');
+                    seat.style.borderColor = 'transparent';
+                }
+                
+                seat.addEventListener('dragover', handleDragOver);
+                seat.addEventListener('dragenter', handleDragEnter);
+                seat.addEventListener('dragleave', handleDragLeave);
+                seat.addEventListener('drop', handleDrop);
+                seatsContainer.appendChild(seat);
+            }
+            tableWrapper.appendChild(header);
+            tableWrapper.appendChild(seatsContainer);
+            return tableWrapper;
+        }
+
+        function render() {
+            unseatedGuestsContainer.innerHTML = '';
+            const unseated = guests.filter(g => g.tableId === null);
+            unseated.forEach(guest => {
+                unseatedGuestsContainer.appendChild(createGuestElement(guest));
+            });
+
+            tablesArea.innerHTML = '';
+            tables.forEach(table => {
+                tablesArea.appendChild(createTableElement(table));
             });
         }
 
-        // --- ОБРАБОТЧИКИ СОБЫТИЙ ---
-        signInBtn.addEventListener('click', async () => {
-            setLoginButtonState(true);
-            const provider = new GoogleAuthProvider();
-            try {
-                await signInWithRedirect(auth, provider);
-            } catch (error) {
-                console.error("Ошибка при инициировании входа через Google:", error);
-                showMessage(`Ошибка: ${error.code}`, "error");
-                setLoginButtonState(false);
+        // --- Event Handlers ---
+        function handleDragStart(e) {
+            draggedGuestId = e.target.id;
+            setTimeout(() => { e.target.style.opacity = '0.5'; }, 0);
+        }
+        
+        function handleDragEnd(e) {
+            if (e.target && findGuestById(e.target.id)) {
+                 e.target.style.opacity = '1';
             }
-        });
-
-        signOutBtn.addEventListener('click', async () => {
-            try {
-                await signOut(auth);
-                showMessage("Вы успешно вышли.", "success");
-            } catch (error) {
-                console.error("Ошибка выхода:", error);
-                showMessage("Не удалось выйти.", "error");
-            }
-        });
-
-        openModalBtn.addEventListener('click', () => showModal());
-        closeModalBtn.addEventListener('click', hideModal);
-        cancelBtn.addEventListener('click', hideModal);
-        confirmCancelBtn.addEventListener('click', hideConfirmModal);
-        confirmOkBtn.addEventListener('click', () => {
-            if (typeof confirmCallback === 'function') {
-                confirmCallback();
-            }
-            hideConfirmModal();
-        });
-        sortOrderSelect.addEventListener('change', sortAndRenderItems);
-        itemForm.addEventListener('submit', handleFormSubmit);
-
-        // --- ОСНОВНАЯ ЛОГИКА (CRUD) ---
-        function getCollectionPath() {
-             // Если приложение запущено не в Canvas, используем простой путь для локального тестирования
-            if (appId === 'default-app-id') {
-                return `users/${userId}/items`;
-            }
-            // В среде Canvas используем защищенный путь
-            return `artifacts/${appId}/users/${userId}/items`;
+            draggedGuestId = null;
         }
 
-        function getDocPath(docId) {
-            return `${getCollectionPath()}/${docId}`;
-        }
+        function handleDragOver(e) { e.preventDefault(); }
 
-        function listenForItems() {
-            if (!userId) return;
-            if (unsubscribe) unsubscribe(); 
-
-            const itemsCollectionRef = collection(db, getCollectionPath());
-            const q = query(itemsCollectionRef); 
-
-            unsubscribe = onSnapshot(q, (snapshot) => {
-                allItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                sortAndRenderItems();
-                updateStats(allItems);
-            }, (error) => {
-                console.error("Ошибка при прослушивании данных:", error);
-                showMessage(`Ошибка загрузки данных: ${error.message}`, "error");
-            });
-        }
-
-        async function handleFormSubmit(e) {
+        function handleDragEnter(e) {
             e.preventDefault();
-            if (!userId) {
-                showMessage("Пользователь не аутентифицирован.", "error");
-                return;
-            }
-
-            const id = document.getElementById('itemId').value;
-            const existingItem = allItems.find(item => item.id === id);
-
-            const itemData = {
-                name: document.getElementById('itemName').value,
-                buyerName: document.getElementById('buyerName').value.trim(),
-                buyerPhone: document.getElementById('buyerPhone').value.trim(),
-                totalPrice: parseFloat(document.getElementById('totalPrice').value),
-                downPayment: parseFloat(document.getElementById('downPayment').value),
-                installmentsCount: parseInt(document.getElementById('installmentsCount').value),
-                startDate: document.getElementById('startDate').value,
-                paidPayments: existingItem ? existingItem.paidPayments : [], 
-                updatedAt: serverTimestamp()
-            };
-
-            try {
-                if (id) {
-                    const itemRef = doc(db, getDocPath(id));
-                    await updateDoc(itemRef, itemData);
-                    showMessage("Товар успешно обновлен!", "success");
-                } else {
-                    itemData.createdAt = serverTimestamp();
-                    const collectionRef = collection(db, getCollectionPath());
-                    await addDoc(collectionRef, itemData);
-                    showMessage("Товар успешно добавлен!", "success");
-                }
-                hideModal();
-            } catch (error) {
-                console.error("Ошибка сохранения данных: ", error);
-                showMessage(`Ошибка сохранения: ${error.message}`, "error");
+            const dropZone = e.target.closest('.seat, #unseatedGuests');
+            if (dropZone && (!dropZone.hasChildNodes() || dropZone.id === 'unseatedGuests' || dropZone.children[0]?.classList.contains('guest-card') === false)) {
+                 dropZone.classList.add('drag-over');
             }
         }
 
-        function sortAndRenderItems() {
-            const sortOrder = sortOrderSelect.value;
-            let sortedItems = [...allItems];
-
-            const calculateRemaining = item => {
-                const monthlyPayment = item.installmentsCount > 0 ? (item.totalPrice - item.downPayment) / item.installmentsCount : 0;
-                const paidAmount = item.downPayment + (item.paidPayments?.length || 0) * monthlyPayment;
-                return item.totalPrice - paidAmount;
-            };
-
-            const getNextDueDate = item => {
-                for (let i = 0; i < item.installmentsCount; i++) {
-                    if (!item.paidPayments?.includes(i)) {
-                        const dueDate = new Date(item.startDate);
-                        dueDate.setMonth(dueDate.getMonth() + i);
-                        return dueDate;
-                    }
-                }
-                return new Date('9999-12-31');
-            };
-
-            switch (sortOrder) {
-                case 'name-asc':
-                    sortedItems.sort((a, b) => a.name.localeCompare(b.name));
-                    break;
-                case 'remaining-desc':
-                    sortedItems.sort((a, b) => calculateRemaining(b) - calculateRemaining(a));
-                    break;
-                case 'due-date-asc':
-                    sortedItems.sort((a, b) => getNextDueDate(a) - getNextDueDate(b));
-                    break;
-                case 'date-added-desc':
-                    sortedItems.sort((a, b) => (b.createdAt?.toDate() || 0) - (a.createdAt?.toDate() || 0));
-                    break;
+        function handleDragLeave(e) {
+            const dropZone = e.target.closest('.seat, #unseatedGuests');
+            if (dropZone) {
+                dropZone.classList.remove('drag-over');
             }
-            renderItems(sortedItems);
         }
 
-        const renderItems = (items) => {
-            itemsContainer.innerHTML = '';
-            if (items.length === 0) {
-                noItemsMessage.classList.remove('hidden');
+        function handleDrop(e) {
+            e.preventDefault();
+            const dropZone = e.target.closest('.seat, #unseatedGuests');
+            if (!dropZone) return;
+            dropZone.classList.remove('drag-over');
+            const guest = findGuestById(draggedGuestId);
+            if (!guest) return;
+            if (dropZone.classList.contains('seat')) {
+                if (dropZone.children.length === 0) {
+                    guest.tableId = dropZone.dataset.tableId;
+                    guest.seatId = dropZone.dataset.seatId;
+                }
+            } else if (dropZone.id === 'unseatedGuests') {
+                guest.tableId = null;
+                guest.seatId = null;
+            }
+            render();
+        }
+        
+        function initializeApp(seatingData) {
+            if (seatingData) {
+                seatingData.guests.forEach((name, index) => addGuest(name, `guest-${index}`));
+                goodPairsList.innerHTML = seatingData.goodPairs.length > 0 ? '' : '<li>Нет явных рекомендаций.</li>';
+                seatingData.goodPairs.forEach(pair => {
+                    const li = document.createElement('li');
+                    li.textContent = `${pair[0]} и ${pair[1]} (${pair[2]}%)`;
+                    goodPairsList.appendChild(li);
+                });
+                badPairsList.innerHTML = seatingData.badPairs.length > 0 ? '' : '<li>Нет явных противопоказаний.</li>';
+                seatingData.badPairs.forEach(pair => {
+                    const li = document.createElement('li');
+                    li.textContent = `${pair[0]} и ${pair[1]} (${pair[2]}%)`;
+                    badPairsList.appendChild(li);
+                });
+            }
+            addTable('rectangle');
+            
+            addRectTableBtn.addEventListener('click', () => addTable('rectangle'));
+            addRoundTableBtn.addEventListener('click', () => addTable('round'));
+            unseatedGuestsContainer.addEventListener('dragover', handleDragOver);
+            unseatedGuestsContainer.addEventListener('dragenter', handleDragEnter);
+            unseatedGuestsContainer.addEventListener('dragleave', handleDragLeave);
+            unseatedGuestsContainer.addEventListener('drop', handleDrop);
+            document.addEventListener('dragend', handleDragEnd);
+            render();
+
+            loader.classList.add('hidden');
+            appContainer.classList.remove('hidden');
+        }
+
+        // --- Main execution ---
+        window.onload = () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const dataParam = urlParams.get('data');
+
+            if (dataParam) {
+                try {
+                    const decodedData = JSON.parse(atob(dataParam));
+                    initializeApp(decodedData);
+                } catch (e) {
+                    console.error("Failed to parse data from URL:", e);
+                    loader.innerHTML = '<h2 class="font-handwriting text-4xl text-red-800 mb-4">Ошибка загрузки данных!</h2><p>Пожалуйста, попробуйте сгенерировать ссылку в боте заново.</p>';
+                }
             } else {
-                noItemsMessage.classList.add('hidden');
-                items.forEach(item => {
-                    const card = createItemCard(item);
-                    itemsContainer.appendChild(card);
-                });
+                 loader.innerHTML = '<h2 class="font-handwriting text-4xl text-red-800 mb-4">Данные не найдены!</h2><p>Эту страницу нужно открывать по специальной ссылке, сгенерированной ботом.</p>';
             }
         };
-        
-        const createItemCard = (item) => {
-            const monthlyPayment = item.installmentsCount > 0 ? (item.totalPrice - item.downPayment) / item.installmentsCount : 0;
-            const paidPayments = item.paidPayments || [];
-            const paidAmount = item.downPayment + paidPayments.length * monthlyPayment;
-            const remainingAmount = item.totalPrice - paidAmount;
-            const paidPercentage = item.totalPrice > 0 ? (paidAmount / item.totalPrice) * 100 : 0;
 
-            const card = document.createElement('div');
-            card.className = 'bg-gray-800 p-6 rounded-xl shadow-lg flex flex-col justify-between transition-all duration-300 hover:shadow-indigo-500/20 hover:ring-1 hover:ring-indigo-500';
-            
-            let paymentsHtml = '<div class="space-y-2 mt-4 max-h-40 overflow-y-auto pr-2">';
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-
-            for (let i = 0; i < item.installmentsCount; i++) {
-                const paymentDate = new Date(item.startDate);
-                paymentDate.setMonth(paymentDate.getMonth() + i);
-                const isPaid = paidPayments.includes(i);
-                const isOverdue = !isPaid && paymentDate < today;
-
-                let bgColor = 'bg-gray-700/50';
-                let textColor = 'text-gray-300';
-                let icon = 'fa-hourglass-half';
-
-                if (isPaid) {
-                    bgColor = 'bg-green-900/50';
-                    textColor = 'text-green-300';
-                    icon = 'fa-check-circle';
-                } else if (isOverdue) {
-                    bgColor = 'bg-red-900/60';
-                    textColor = 'text-red-300';
-                    icon = 'fa-exclamation-circle';
-                }
-                
-                paymentsHtml += `
-                    <div class="flex justify-between items-center p-2 rounded-md ${bgColor}">
-                        <span class="text-sm ${textColor}">
-                            <i class="fas ${icon} mr-2"></i>
-                            ${paymentDate.toLocaleDateString('ru-RU')}
-                        </span>
-                        <span class="font-semibold ${textColor}">${monthlyPayment.toFixed(2)} BYN</span>
-                        <button class="toggle-payment-btn text-xs py-1 px-2 rounded ${isPaid ? 'bg-yellow-600 hover:bg-yellow-700' : 'bg-green-600 hover:bg-green-700'} text-white" data-item-id="${item.id}" data-payment-index="${i}">
-                            ${isPaid ? 'Отменить' : 'Оплатить'}
-                        </button>
-                    </div>
-                `;
-            }
-            paymentsHtml += '</div>';
-
-            const buyerInfoHtml = (item.buyerName || item.buyerPhone) ? `
-            <div class="text-sm text-gray-400 my-3 border-t border-b border-gray-700 py-2 space-y-1">
-                ${item.buyerName ? `<div class="flex items-center"><i class="fas fa-user w-4 text-center mr-2 text-gray-500"></i><span>${item.buyerName}</span></div>` : ''}
-                ${item.buyerPhone ? `<div class="flex items-center"><i class="fas fa-phone w-4 text-center mr-2 text-gray-500"></i><span>${item.buyerPhone}</span></div>` : ''}
-            </div>
-            ` : '';
-
-            card.innerHTML = `
-                <div>
-                    <div class="flex justify-between items-start">
-                        <h3 class="text-xl font-bold text-white mb-2">${item.name}</h3>
-                        <div class="flex space-x-2">
-                            <button class="edit-btn text-blue-400 hover:text-blue-300" title="Редактировать"><i class="fas fa-edit"></i></button>
-                            <button class="delete-btn text-red-400 hover:text-red-300" title="Удалить"><i class="fas fa-trash"></i></button>
-                        </div>
-                    </div>
-                    ${buyerInfoHtml}
-                    <p class="text-sm text-gray-400">Общая стоимость: ${item.totalPrice.toFixed(2)} BYN</p>
-                    
-                    <div class="mt-4">
-                        <div class="flex justify-between text-sm font-medium text-gray-300 mb-1">
-                            <span>Выплачено: ${paidAmount.toFixed(2)} BYN</span>
-                            <span>Остаток: ${remainingAmount.toFixed(2)} BYN</span>
-                        </div>
-                        <div class="w-full bg-gray-700 rounded-full h-2.5">
-                            <div class="bg-indigo-600 h-2.5 rounded-full transition-all duration-500" style="width: ${paidPercentage}%"></div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="mt-4">
-                    <h4 class="font-semibold text-gray-200 mb-2">График платежей (${monthlyPayment.toFixed(2)} BYN/мес)</h4>
-                    ${paymentsHtml}
-                </div>
-            `;
-
-            card.querySelector('.edit-btn').addEventListener('click', () => showModal(true, item));
-            card.querySelector('.delete-btn').addEventListener('click', () => {
-                showConfirmModal(`Вы уверены, что хотите удалить "${item.name}"?`, async () => {
-                    try {
-                        await deleteDoc(doc(db, getDocPath(item.id)));
-                        showMessage("Товар успешно удален!", "success");
-                    } catch (error) {
-                        console.error("Ошибка удаления: ", error);
-                        showMessage(`Ошибка удаления: ${error.message}`, "error");
-                    }
-                });
-            });
-            card.querySelectorAll('.toggle-payment-btn').forEach(btn => {
-                btn.addEventListener('click', async (e) => {
-                    const paymentIndex = parseInt(e.target.dataset.paymentIndex);
-                    const itemRef = doc(db, getDocPath(item.id));
-                    const currentItem = allItems.find(i => i.id === item.id);
-                    const paidPayments = currentItem.paidPayments || [];
-                    const isPaid = paidPayments.includes(paymentIndex);
-                    let newPaidPayments = isPaid ? paidPayments.filter(p => p !== paymentIndex) : [...paidPayments, paymentIndex];
-                    
-                    try {
-                        await updateDoc(itemRef, { paidPayments: newPaidPayments });
-                        showMessage("Статус платежа обновлен!", "success");
-                    } catch (error) {
-                        console.error("Ошибка обновления платежа: ", error);
-                        showMessage(`Ошибка обновления: ${error.message}`, "error");
-                    }
-                });
-            });
-
-            return card;
-        };
-        
-        const updateStats = (items) => {
-            let totalAmount = 0;
-            let totalPaid = 0;
-            
-            items.forEach(item => {
-                const monthlyPayment = item.installmentsCount > 0 ? (item.totalPrice - item.downPayment) / item.installmentsCount : 0;
-                const paidPayments = item.paidPayments || [];
-                const paidAmount = item.downPayment + paidPayments.length * monthlyPayment;
-                totalAmount += item.totalPrice;
-                totalPaid += paidAmount;
-            });
-            
-            const totalRemaining = totalAmount - totalPaid;
-            
-            totalAmountEl.textContent = `${totalAmount.toFixed(2)} BYN`;
-            totalPaidEl.textContent = `${totalPaid.toFixed(2)} BYN`;
-            totalRemainingEl.textContent = `${totalRemaining.toFixed(2)} BYN`;
-        };
-        
-        // --- ЗАПУСК ПРИЛОЖЕНИЯ ---
-        main();
     </script>
+
 </body>
 </html>
