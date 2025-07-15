@@ -27,6 +27,28 @@
             transform: scale(1.05);
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
+        .delete-guest-btn {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            width: 24px;
+            height: 24px;
+            background-color: #ef4444;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s;
+            border: 2px solid white;
+        }
+        .guest-card:hover .delete-guest-btn {
+            opacity: 1;
+        }
         .seat {
             transition: all 0.2s ease-in-out;
             border: 2px dashed #d1d5db;
@@ -56,6 +78,15 @@
             position: absolute;
             transform: translate(-50%, -50%);
         }
+        @media print {
+            .no-print { display: none !important; }
+            body, .container { background: #fff !important; padding: 0 !important; margin: 0 !important; width: 100% !important; max-width: none !important; }
+            main#tablesArea { display: grid !important; grid-template-columns: repeat(2, 1fr) !important; gap: 1.5rem !important; }
+            .table-container { page-break-inside: avoid; box-shadow: none; border: 2px solid #000; background: #fff; backdrop-filter: none; }
+            .guest-card { box-shadow: none; border: 1px solid #999; }
+            .seat { border-style: solid; }
+            header { display: none; }
+        }
     </style>
 </head>
 <body class="text-gray-700">
@@ -74,24 +105,28 @@
         <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
             <aside class="lg:col-span-1 space-y-6">
                 
+                <div class="bg-white p-6 rounded-2xl shadow-lg no-print">
+                    <h2 class="font-handwriting text-3xl text-amber-800 mb-4">Добавить гостя</h2>
+                    <div class="flex flex-col sm:flex-row gap-2">
+                        <input type="text" id="guestNameInput" placeholder="Имя и фамилия" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition">
+                        <button id="addGuestBtn" class="bg-amber-700 text-white px-4 sm:px-2 py-2 rounded-lg hover:bg-amber-800 transition shadow flex-shrink-0">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+                        </button>
+                    </div>
+                </div>
+
                 <div class="bg-green-100 p-6 rounded-2xl shadow-lg no-print">
                     <h2 class="font-handwriting text-3xl text-green-800 mb-4">Посадить вместе 💚</h2>
-                    <ul id="goodPairsList" class="space-y-2 text-green-900">
-                        <!-- Good pairs will be inserted here -->
-                    </ul>
+                    <ul id="goodPairsList" class="space-y-2 text-green-900"></ul>
                 </div>
                 <div class="bg-red-100 p-6 rounded-2xl shadow-lg no-print">
                     <h2 class="font-handwriting text-3xl text-red-800 mb-4">Не садить вместе 💔</h2>
-                    <ul id="badPairsList" class="space-y-2 text-red-900">
-                        <!-- Bad pairs will be inserted here -->
-                    </ul>
+                    <ul id="badPairsList" class="space-y-2 text-red-900"></ul>
                 </div>
 
                 <div id="unseated-container" class="unseated-container bg-white p-6 rounded-2xl shadow-lg">
                     <h2 class="font-handwriting text-3xl text-amber-800 mb-4">Гости без места</h2>
-                    <div id="unseatedGuests" class="space-y-2 min-h-[100px] p-2 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
-                        <!-- Unseated guests will be inserted here -->
-                    </div>
+                    <div id="unseatedGuests" class="space-y-2 min-h-[100px] p-2 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200"></div>
                 </div>
 
                  <div class="bg-white p-6 rounded-2xl shadow-lg no-print">
@@ -102,14 +137,13 @@
                         <hr class="my-4">
                         <button id="saveBtn" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition shadow-md font-semibold">Сохранить</button>
                         <button id="resetBtn" class="w-full bg-gray-400 text-white py-2 rounded-lg hover:bg-gray-500 transition shadow-md font-semibold">Сбросить</button>
+                        <button id="printBtn" class="w-full bg-sky-600 text-white py-2 rounded-lg hover:bg-sky-700 transition shadow-md font-semibold mt-2">Печать</button>
                     </div>
                 </div>
 
             </aside>
 
-            <main id="tablesArea" class="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 items-start">
-                <!-- Tables will be rendered here -->
-            </main>
+            <main id="tablesArea" class="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 items-start"></main>
         </div>
     </div>
 
@@ -117,10 +151,13 @@
         // --- DOM Elements ---
         const loader = document.getElementById('loader');
         const appContainer = document.getElementById('app');
+        const guestNameInput = document.getElementById('guestNameInput');
+        const addGuestBtn = document.getElementById('addGuestBtn');
         const addRectTableBtn = document.getElementById('addRectTableBtn');
         const addRoundTableBtn = document.getElementById('addRoundTableBtn');
         const saveBtn = document.getElementById('saveBtn');
         const resetBtn = document.getElementById('resetBtn');
+        const printBtn = document.getElementById('printBtn');
         const unseatedGuestsContainer = document.getElementById('unseatedGuests');
         const tablesArea = document.getElementById('tablesArea');
         const goodPairsList = document.getElementById('goodPairsList');
@@ -136,13 +173,22 @@
         // --- Functions ---
         function addGuest(name, id = null) {
             if (!name.trim()) return;
-            const guest = { id: id || `guest-${nextGuestId++}`, name: name.trim(), tableId: null, seatId: null };
+            const guestId = id || `guest-manual-${nextGuestId++}`;
+            if (guests.some(g => g.id === guestId)) return; // Prevent duplicates on reload
+            const guest = { id: guestId, name: name.trim(), tableId: null, seatId: null };
             guests.push(guest);
+            guestNameInput.value = '';
+        }
+
+        function deleteGuest(guestId) {
+            guests = guests.filter(g => g.id !== guestId);
+            render();
         }
 
         function addTable(shape) {
+            const tableId = `table-${nextTableId++}`;
             const table = {
-                id: `table-${nextTableId++}`,
+                id: tableId,
                 name: `Стол №${nextTableId}`,
                 seats: shape === 'round' ? 8 : 6,
                 shape: shape
@@ -162,6 +208,19 @@
             div.draggable = true;
             div.textContent = guest.name;
             div.addEventListener('dragstart', handleDragStart);
+
+            const deleteBtn = document.createElement('div');
+            deleteBtn.className = 'delete-guest-btn no-print';
+            deleteBtn.innerHTML = '&#x2716;';
+            deleteBtn.title = 'Удалить гостя';
+            deleteBtn.onclick = (e) => {
+                e.stopPropagation();
+                if (confirm(`Вы уверены, что хотите удалить гостя "${guest.name}"?`)) {
+                    deleteGuest(guest.id);
+                }
+            };
+            div.appendChild(deleteBtn);
+            
             return div;
         }
         
@@ -305,7 +364,7 @@
 
         // --- State Management ---
         function saveState(storageKey) {
-            const stateToSave = { guests: guests, tables: tables };
+            const stateToSave = { guests: guests, tables: tables, nextTableId: nextTableId, nextGuestId: nextGuestId };
             try {
                 localStorage.setItem(storageKey, JSON.stringify(stateToSave));
                 const originalText = saveBtn.innerHTML;
@@ -341,14 +400,13 @@
             if (savedState) {
                 guests = savedState.guests;
                 tables = savedState.tables;
-                nextGuestId = guests.length;
-                nextTableId = tables.length;
+                nextGuestId = savedState.nextGuestId || guests.length;
+                nextTableId = savedState.nextTableId || tables.length;
             } else {
-                initialData.guests.forEach((name, index) => addGuest(name, `guest-${index}`));
+                initialData.guests.forEach((name, index) => addGuest(name, `guest-initial-${index}`));
                 addTable('rectangle');
             }
 
-            // Populate recommendation lists from initial data regardless of saved state
             goodPairsList.innerHTML = initialData.goodPairs.length > 0 ? '' : '<li>Нет явных рекомендаций.</li>';
             initialData.goodPairs.forEach(pair => {
                 const li = document.createElement('li');
@@ -362,9 +420,12 @@
                 badPairsList.appendChild(li);
             });
             
+            addGuestBtn.addEventListener('click', () => { addGuest(guestNameInput.value); render(); });
+            guestNameInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') { addGuest(guestNameInput.value); render(); }});
             addRectTableBtn.addEventListener('click', () => addTable('rectangle'));
             addRoundTableBtn.addEventListener('click', () => addTable('round'));
             saveBtn.addEventListener('click', () => saveState(storageKey));
+            printBtn.addEventListener('click', () => window.print());
             resetBtn.addEventListener('click', () => {
                 if (confirm("Вы уверены, что хотите сбросить все изменения? Это действие удалит сохраненную рассадку и вернет первоначальный список гостей.")) {
                     localStorage.removeItem(storageKey);
