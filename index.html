@@ -329,6 +329,19 @@
             appContainer.classList.remove('hidden');
         }
 
+        // --- ИСПРАВЛЕНИЕ: Новая функция для корректного декодирования UTF-8 ---
+        function b64DecodeUnicode(str) {
+            try {
+                const percentEncodedStr = atob(str).split('').map(function(c) {
+                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                }).join('');
+                return decodeURIComponent(percentEncodedStr);
+            } catch (e) {
+                console.error("b64DecodeUnicode failed:", e);
+                return null;
+            }
+        }
+
         // --- Main execution ---
         window.onload = () => {
             const urlParams = new URLSearchParams(window.location.search);
@@ -336,8 +349,14 @@
 
             if (dataParam) {
                 try {
-                    const decodedData = JSON.parse(atob(dataParam));
-                    initializeApp(decodedData);
+                    // Используем новую функцию для декодирования
+                    const decodedJson = b64DecodeUnicode(dataParam);
+                    if (decodedJson) {
+                        const decodedData = JSON.parse(decodedJson);
+                        initializeApp(decodedData);
+                    } else {
+                        throw new Error("Decoded JSON is null");
+                    }
                 } catch (e) {
                     console.error("Failed to parse data from URL:", e);
                     loader.innerHTML = '<h2 class="font-handwriting text-4xl text-red-800 mb-4">Ошибка загрузки данных!</h2><p>Пожалуйста, попробуйте сгенерировать ссылку в боте заново.</p>';
