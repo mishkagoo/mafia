@@ -115,15 +115,6 @@
                     </div>
                 </div>
 
-                <div class="bg-green-100 p-6 rounded-2xl shadow-lg no-print">
-                    <h2 class="font-handwriting text-3xl text-green-800 mb-4">Посадить вместе 💚</h2>
-                    <ul id="goodPairsList" class="space-y-2 text-green-900"></ul>
-                </div>
-                <div class="bg-red-100 p-6 rounded-2xl shadow-lg no-print">
-                    <h2 class="font-handwriting text-3xl text-red-800 mb-4">Не садить вместе 💔</h2>
-                    <ul id="badPairsList" class="space-y-2 text-red-900"></ul>
-                </div>
-
                 <div id="unseated-container" class="unseated-container bg-white p-6 rounded-2xl shadow-lg">
                     <h2 class="font-handwriting text-3xl text-amber-800 mb-4">Гости без места</h2>
                     <div id="unseatedGuests" class="space-y-2 min-h-[100px] p-2 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200"></div>
@@ -160,8 +151,6 @@
         const printBtn = document.getElementById('printBtn');
         const unseatedGuestsContainer = document.getElementById('unseatedGuests');
         const tablesArea = document.getElementById('tablesArea');
-        const goodPairsList = document.getElementById('goodPairsList');
-        const badPairsList = document.getElementById('badPairsList');
 
         // --- State ---
         let guests = [];
@@ -406,19 +395,6 @@
                 initialData.guests.forEach((name, index) => addGuest(name, `guest-initial-${index}`));
                 addTable('rectangle');
             }
-
-            goodPairsList.innerHTML = initialData.goodPairs.length > 0 ? '' : '<li>Нет явных рекомендаций.</li>';
-            initialData.goodPairs.forEach(pair => {
-                const li = document.createElement('li');
-                li.textContent = `${pair[0]} и ${pair[1]} (${pair[2]}%)`;
-                goodPairsList.appendChild(li);
-            });
-            badPairsList.innerHTML = initialData.badPairs.length > 0 ? '' : '<li>Нет явных противопоказаний.</li>';
-            initialData.badPairs.forEach(pair => {
-                const li = document.createElement('li');
-                li.textContent = `${pair[0]} и ${pair[1]} (${pair[2]}%)`;
-                badPairsList.appendChild(li);
-            });
             
             addGuestBtn.addEventListener('click', () => { addGuest(guestNameInput.value); render(); });
             guestNameInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') { addGuest(guestNameInput.value); render(); }});
