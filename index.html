@@ -9,75 +9,18 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Marck+Script&family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Montserrat', sans-serif;
-            background-color: #fdfaf6;
-        }
-        .font-handwriting {
-            font-family: 'Marck Script', cursive;
-        }
-        .guest-card {
-            cursor: grab;
-            transition: all 0.2s ease-in-out;
-            touch-action: none;
-            position: relative;
-        }
-        .guest-card:active {
-            cursor: grabbing;
-            transform: scale(1.05);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-        }
-        .delete-guest-btn {
-            position: absolute;
-            top: -8px;
-            right: -8px;
-            width: 24px;
-            height: 24px;
-            background-color: #ef4444;
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-            font-weight: bold;
-            cursor: pointer;
-            opacity: 0;
-            transition: opacity 0.2s;
-            border: 2px solid white;
-        }
-        .guest-card:hover .delete-guest-btn {
-            opacity: 1;
-        }
-        .seat {
-            transition: all 0.2s ease-in-out;
-            border: 2px dashed #d1d5db;
-        }
-        .seat.drag-over {
-            background-color: #e0f2fe;
-            border-color: #38bdf8;
-        }
-        .table-container {
-            background-color: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(0,0,0,0.05);
-        }
-        .unseated-container {
-             min-height: 150px;
-        }
-        .round-table .seats-container {
-            position: relative;
-            width: 100%;
-            aspect-ratio: 1 / 1;
-            margin: 1rem auto;
-            border: 4px solid #c7d2fe;
-            border-radius: 50%;
-            background-color: #eef2ff;
-        }
-        .round-table .seat {
-            position: absolute;
-            transform: translate(-50%, -50%);
-        }
+        body { font-family: 'Montserrat', sans-serif; background-color: #fdfaf6; }
+        .font-handwriting { font-family: 'Marck Script', cursive; }
+        .guest-card { cursor: grab; transition: all 0.2s ease-in-out; touch-action: none; position: relative; }
+        .guest-card:active { cursor: grabbing; transform: scale(1.05); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+        .delete-guest-btn { position: absolute; top: -8px; right: -8px; width: 24px; height: 24px; background-color: #ef4444; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; cursor: pointer; opacity: 0; transition: opacity 0.2s; border: 2px solid white; }
+        .guest-card:hover .delete-guest-btn { opacity: 1; }
+        .seat { transition: all 0.2s ease-in-out; border: 2px dashed #d1d5db; }
+        .seat.drag-over { background-color: #e0f2fe; border-color: #38bdf8; }
+        .table-container { background-color: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); border: 1px solid rgba(0,0,0,0.05); }
+        .unseated-container { min-height: 150px; }
+        .round-table .seats-container { position: relative; width: 100%; aspect-ratio: 1 / 1; margin: 1rem auto; border: 4px solid #c7d2fe; border-radius: 50%; background-color: #eef2ff; }
+        .round-table .seat { position: absolute; transform: translate(-50%, -50%); }
         @media print {
             .no-print { display: none !important; }
             body, .container { background: #fff !important; padding: 0 !important; margin: 0 !important; width: 100% !important; max-width: none !important; }
@@ -115,7 +58,7 @@
                     </div>
                 </div>
 
-                <div id="unseated-container" class="unseated-container bg-white p-6 rounded-2xl shadow-lg">
+                <div id="unseated-container" class="unseated-container bg-white p-6 rounded-2xl shadow-lg no-print">
                     <h2 class="font-handwriting text-3xl text-amber-800 mb-4">Гости без места</h2>
                     <div id="unseatedGuests" class="space-y-2 min-h-[100px] p-2 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200"></div>
                 </div>
@@ -126,8 +69,7 @@
                         <button id="addRectTableBtn" class="w-full bg-emerald-600 text-white py-2 rounded-lg hover:bg-emerald-700 transition shadow-md font-semibold">Добавить прямоугольный стол</button>
                         <button id="addRoundTableBtn" class="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition shadow-md font-semibold">Добавить круглый стол</button>
                         <hr class="my-4">
-                        <button id="saveBtn" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition shadow-md font-semibold">Сохранить</button>
-                        <button id="resetBtn" class="w-full bg-gray-400 text-white py-2 rounded-lg hover:bg-gray-500 transition shadow-md font-semibold">Сбросить</button>
+                        <button id="exportBtn" class="w-full bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 transition shadow-md font-semibold">Экспортировать для бота</button>
                         <button id="printBtn" class="w-full bg-sky-600 text-white py-2 rounded-lg hover:bg-sky-700 transition shadow-md font-semibold mt-2">Печать</button>
                     </div>
                 </div>
@@ -146,8 +88,7 @@
         const addGuestBtn = document.getElementById('addGuestBtn');
         const addRectTableBtn = document.getElementById('addRectTableBtn');
         const addRoundTableBtn = document.getElementById('addRoundTableBtn');
-        const saveBtn = document.getElementById('saveBtn');
-        const resetBtn = document.getElementById('resetBtn');
+        const exportBtn = document.getElementById('exportBtn');
         const printBtn = document.getElementById('printBtn');
         const unseatedGuestsContainer = document.getElementById('unseatedGuests');
         const tablesArea = document.getElementById('tablesArea');
@@ -163,7 +104,7 @@
         function addGuest(name, id = null) {
             if (!name.trim()) return;
             const guestId = id || `guest-manual-${nextGuestId++}`;
-            if (guests.some(g => g.id === guestId)) return; // Prevent duplicates on reload
+            if (guests.some(g => g.id === guestId)) return;
             const guest = { id: guestId, name: name.trim(), tableId: null, seatId: null };
             guests.push(guest);
             guestNameInput.value = '';
@@ -351,48 +292,42 @@
             render();
         }
 
-        // --- State Management ---
-        function saveState(storageKey) {
-            const stateToSave = { guests: guests, tables: tables, nextTableId: nextTableId, nextGuestId: nextGuestId };
-            try {
-                localStorage.setItem(storageKey, JSON.stringify(stateToSave));
-                const originalText = saveBtn.innerHTML;
-                saveBtn.innerHTML = 'Сохранено! ✅';
-                saveBtn.classList.replace('bg-blue-600', 'bg-green-500');
-                saveBtn.classList.replace('hover:bg-blue-700', 'hover:bg-green-600');
-                setTimeout(() => {
-                    saveBtn.innerHTML = originalText;
-                    saveBtn.classList.replace('bg-green-500', 'bg-blue-600');
-                    saveBtn.classList.replace('hover:bg-green-600', 'hover:bg-blue-700');
-                }, 2000);
-            } catch (e) {
-                console.error("Failed to save state:", e);
-                alert("Не удалось сохранить состояние.");
-            }
+        function unicodeToBase64(str) {
+            return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g,
+                function toSolidBytes(match, p1) {
+                    return String.fromCharCode('0x' + p1);
+            }));
         }
 
-        function loadState(storageKey) {
-            const savedData = localStorage.getItem(storageKey);
-            if (savedData) {
-                try {
-                    return JSON.parse(savedData);
-                } catch (e) {
-                    localStorage.removeItem(storageKey);
-                    return null;
-                }
-            }
-            return null;
+        function exportState() {
+            const stateToSave = { guests: guests, tables: tables };
+            const jsonString = JSON.stringify(stateToSave);
+            const base64String = unicodeToBase64(jsonString);
+            const command = `/import_seating ${base64String}`;
+            
+            navigator.clipboard.writeText(command).then(() => {
+                const originalText = exportBtn.innerHTML;
+                exportBtn.innerHTML = 'Скопировано! ✅';
+                exportBtn.classList.replace('bg-purple-600', 'bg-green-500');
+                setTimeout(() => {
+                    exportBtn.innerHTML = originalText;
+                    exportBtn.classList.replace('bg-green-500', 'bg-purple-600');
+                }, 2000);
+            }, (err) => {
+                console.error('Could not copy text: ', err);
+                alert('Не удалось скопировать. Пожалуйста, скопируйте вручную.');
+                prompt("Команда для бота:", command);
+            });
         }
         
-        function initializeApp(initialData, storageKey) {
-            const savedState = loadState(storageKey);
-            if (savedState) {
-                guests = savedState.guests;
-                tables = savedState.tables;
-                nextGuestId = savedState.nextGuestId || guests.length;
-                nextTableId = savedState.nextTableId || tables.length;
-            } else {
-                initialData.guests.forEach((name, index) => addGuest(name, `guest-initial-${index}`));
+        function initializeApp(initialData) {
+            if (initialData && initialData.guests) {
+                guests = initialData.guests;
+                tables = initialData.tables || [];
+                nextGuestId = guests.length;
+                nextTableId = tables.length;
+            } else if (initialData) { // Fallback for old format
+                initialData.forEach((name, index) => addGuest(name, `guest-initial-${index}`));
                 addTable('rectangle');
             }
             
@@ -400,14 +335,9 @@
             guestNameInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') { addGuest(guestNameInput.value); render(); }});
             addRectTableBtn.addEventListener('click', () => addTable('rectangle'));
             addRoundTableBtn.addEventListener('click', () => addTable('round'));
-            saveBtn.addEventListener('click', () => saveState(storageKey));
+            exportBtn.addEventListener('click', exportState);
             printBtn.addEventListener('click', () => window.print());
-            resetBtn.addEventListener('click', () => {
-                if (confirm("Вы уверены, что хотите сбросить все изменения? Это действие удалит сохраненную рассадку и вернет первоначальный список гостей.")) {
-                    localStorage.removeItem(storageKey);
-                    window.location.reload();
-                }
-            });
+            
             unseatedGuestsContainer.addEventListener('dragover', handleDragOver);
             unseatedGuestsContainer.addEventListener('dragenter', handleDragEnter);
             unseatedGuestsContainer.addEventListener('dragleave', handleDragLeave);
@@ -429,21 +359,17 @@
             }
         }
 
-        // --- Main execution ---
         window.onload = () => {
             const urlParams = new URLSearchParams(window.location.search);
             const dataParam = urlParams.get('data');
-            const storageKey = `seatingPlan_${dataParam}`;
 
             if (dataParam) {
                 try {
                     const decodedJson = b64DecodeUnicode(dataParam);
                     if (decodedJson) {
                         const initialData = JSON.parse(decodedJson);
-                        initializeApp(initialData, storageKey);
-                    } else {
-                        throw new Error("Decoded JSON is null");
-                    }
+                        initializeApp(initialData);
+                    } else { throw new Error("Decoded JSON is null"); }
                 } catch (e) {
                     console.error("Failed to parse data from URL:", e);
                     loader.innerHTML = '<h2 class="font-handwriting text-4xl text-red-800 mb-4">Ошибка загрузки данных!</h2><p>Пожалуйста, попробуйте сгенерировать ссылку в боте заново.</p>';
