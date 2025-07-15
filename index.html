@@ -99,6 +99,9 @@
                     <div class="space-y-3">
                         <button id="addRectTableBtn" class="w-full bg-emerald-600 text-white py-2 rounded-lg hover:bg-emerald-700 transition shadow-md font-semibold">Добавить прямоугольный стол</button>
                         <button id="addRoundTableBtn" class="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition shadow-md font-semibold">Добавить круглый стол</button>
+                        <hr class="my-4">
+                        <button id="saveBtn" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition shadow-md font-semibold">Сохранить</button>
+                        <button id="resetBtn" class="w-full bg-gray-400 text-white py-2 rounded-lg hover:bg-gray-500 transition shadow-md font-semibold">Сбросить</button>
                     </div>
                 </div>
 
@@ -116,6 +119,8 @@
         const appContainer = document.getElementById('app');
         const addRectTableBtn = document.getElementById('addRectTableBtn');
         const addRoundTableBtn = document.getElementById('addRoundTableBtn');
+        const saveBtn = document.getElementById('saveBtn');
+        const resetBtn = document.getElementById('resetBtn');
         const unseatedGuestsContainer = document.getElementById('unseatedGuests');
         const tablesArea = document.getElementById('tablesArea');
         const goodPairsList = document.getElementById('goodPairsList');
@@ -297,27 +302,75 @@
             }
             render();
         }
-        
-        function initializeApp(seatingData) {
-            if (seatingData) {
-                seatingData.guests.forEach((name, index) => addGuest(name, `guest-${index}`));
-                goodPairsList.innerHTML = seatingData.goodPairs.length > 0 ? '' : '<li>Нет явных рекомендаций.</li>';
-                seatingData.goodPairs.forEach(pair => {
-                    const li = document.createElement('li');
-                    li.textContent = `${pair[0]} и ${pair[1]} (${pair[2]}%)`;
-                    goodPairsList.appendChild(li);
-                });
-                badPairsList.innerHTML = seatingData.badPairs.length > 0 ? '' : '<li>Нет явных противопоказаний.</li>';
-                seatingData.badPairs.forEach(pair => {
-                    const li = document.createElement('li');
-                    li.textContent = `${pair[0]} и ${pair[1]} (${pair[2]}%)`;
-                    badPairsList.appendChild(li);
-                });
+
+        // --- State Management ---
+        function saveState(storageKey) {
+            const stateToSave = { guests: guests, tables: tables };
+            try {
+                localStorage.setItem(storageKey, JSON.stringify(stateToSave));
+                const originalText = saveBtn.innerHTML;
+                saveBtn.innerHTML = 'Сохранено! ✅';
+                saveBtn.classList.replace('bg-blue-600', 'bg-green-500');
+                saveBtn.classList.replace('hover:bg-blue-700', 'hover:bg-green-600');
+                setTimeout(() => {
+                    saveBtn.innerHTML = originalText;
+                    saveBtn.classList.replace('bg-green-500', 'bg-blue-600');
+                    saveBtn.classList.replace('hover:bg-green-600', 'hover:bg-blue-700');
+                }, 2000);
+            } catch (e) {
+                console.error("Failed to save state:", e);
+                alert("Не удалось сохранить состояние.");
             }
-            addTable('rectangle');
+        }
+
+        function loadState(storageKey) {
+            const savedData = localStorage.getItem(storageKey);
+            if (savedData) {
+                try {
+                    return JSON.parse(savedData);
+                } catch (e) {
+                    localStorage.removeItem(storageKey);
+                    return null;
+                }
+            }
+            return null;
+        }
+        
+        function initializeApp(initialData, storageKey) {
+            const savedState = loadState(storageKey);
+            if (savedState) {
+                guests = savedState.guests;
+                tables = savedState.tables;
+                nextGuestId = guests.length;
+                nextTableId = tables.length;
+            } else {
+                initialData.guests.forEach((name, index) => addGuest(name, `guest-${index}`));
+                addTable('rectangle');
+            }
+
+            // Populate recommendation lists from initial data regardless of saved state
+            goodPairsList.innerHTML = initialData.goodPairs.length > 0 ? '' : '<li>Нет явных рекомендаций.</li>';
+            initialData.goodPairs.forEach(pair => {
+                const li = document.createElement('li');
+                li.textContent = `${pair[0]} и ${pair[1]} (${pair[2]}%)`;
+                goodPairsList.appendChild(li);
+            });
+            badPairsList.innerHTML = initialData.badPairs.length > 0 ? '' : '<li>Нет явных противопоказаний.</li>';
+            initialData.badPairs.forEach(pair => {
+                const li = document.createElement('li');
+                li.textContent = `${pair[0]} и ${pair[1]} (${pair[2]}%)`;
+                badPairsList.appendChild(li);
+            });
             
             addRectTableBtn.addEventListener('click', () => addTable('rectangle'));
             addRoundTableBtn.addEventListener('click', () => addTable('round'));
+            saveBtn.addEventListener('click', () => saveState(storageKey));
+            resetBtn.addEventListener('click', () => {
+                if (confirm("Вы уверены, что хотите сбросить все изменения? Это действие удалит сохраненную рассадку и вернет первоначальный список гостей.")) {
+                    localStorage.removeItem(storageKey);
+                    window.location.reload();
+                }
+            });
             unseatedGuestsContainer.addEventListener('dragover', handleDragOver);
             unseatedGuestsContainer.addEventListener('dragenter', handleDragEnter);
             unseatedGuestsContainer.addEventListener('dragleave', handleDragLeave);
@@ -329,12 +382,9 @@
             appContainer.classList.remove('hidden');
         }
 
-        // --- ИСПРАВЛЕНИЕ: Новая функция для корректного декодирования UTF-8 ---
         function b64DecodeUnicode(str) {
             try {
-                const percentEncodedStr = atob(str).split('').map(function(c) {
-                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-                }).join('');
+                const percentEncodedStr = atob(str).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('');
                 return decodeURIComponent(percentEncodedStr);
             } catch (e) {
                 console.error("b64DecodeUnicode failed:", e);
@@ -346,14 +396,14 @@
         window.onload = () => {
             const urlParams = new URLSearchParams(window.location.search);
             const dataParam = urlParams.get('data');
+            const storageKey = `seatingPlan_${dataParam}`;
 
             if (dataParam) {
                 try {
-                    // Используем новую функцию для декодирования
                     const decodedJson = b64DecodeUnicode(dataParam);
                     if (decodedJson) {
-                        const decodedData = JSON.parse(decodedJson);
-                        initializeApp(decodedData);
+                        const initialData = JSON.parse(decodedJson);
+                        initializeApp(initialData, storageKey);
                     } else {
                         throw new Error("Decoded JSON is null");
                     }
