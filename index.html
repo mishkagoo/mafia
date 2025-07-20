@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Профессиональная уборка квартир и домов в Минске</title>
+    <title>PRIME CLEAN - Профессиональная уборка квартир и домов в Минске</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Chosen Palette: Calm & Clean Waters -->
+    <!-- Chosen Palette: Calm & Clean Waters (Updated to Prime Blue) -->
     <!-- Application Structure Plan: The application is designed as a single-page, top-to-bottom scrolling experience. This structure is optimal for a service-based business as it allows users to naturally flow through the information: from the initial value proposition (Hero section), through the available services, understanding the process, calculating a custom price (the core interactive feature), and finally building trust through FAQs and contact information. A sticky navigation bar provides quick access to any section, catering to users who know what they're looking for. The primary user goal is to quickly understand services and get a price, which is why the 'Calculate Cost' feature is prominent and interactive. -->
     <!-- Visualization & Content Choices: 
         Report Info: List of cleaning services. -> Goal: Inform & Compare. -> Viz/Method: Responsive card grid using Tailwind CSS. -> Interaction: Buttons on cards scroll the user to the interactive calculator. -> Justification: Cards provide a visually distinct and easily digestible summary of each service, facilitating comparison.
@@ -40,18 +40,21 @@
 
     <header id="header" class="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50">
         <div class="container mx-auto px-4">
-            <div class="flex justify-between items-center py-4">
-                <a href="#home" class="text-2xl font-bold text-cyan-600">CleaningHome</a>
+            <div class="flex justify-between items-center py-2">
+                <a href="#home" class="flex items-center gap-3">
+                    <img src="logo.png" alt="PRIME CLEAN Logo" class="h-12 md:h-14">
+                    <span class="text-2xl font-bold text-blue-600 hidden sm:block">PRIME CLEAN</span>
+                </a>
                 <nav class="hidden lg:flex items-center space-x-6">
-                    <a href="#services" class="text-gray-600 hover:text-cyan-600 transition-all-fast">Услуги и цены</a>
-                    <a href="#process" class="text-gray-600 hover:text-cyan-600 transition-all-fast">Как мы работаем</a>
-                    <a href="#calculator" class="text-gray-600 hover:text-cyan-600 transition-all-fast">Калькулятор</a>
-                    <a href="#faq" class="text-gray-600 hover:text-cyan-600 transition-all-fast">FAQ</a>
-                    <a href="#contact" class="text-gray-600 hover:text-cyan-600 transition-all-fast">Контакты</a>
+                    <a href="#services" class="text-gray-600 hover:text-blue-600 transition-all-fast">Услуги и цены</a>
+                    <a href="#process" class="text-gray-600 hover:text-blue-600 transition-all-fast">Как мы работаем</a>
+                    <a href="#calculator" class="text-gray-600 hover:text-blue-600 transition-all-fast">Калькулятор</a>
+                    <a href="#faq" class="text-gray-600 hover:text-blue-600 transition-all-fast">FAQ</a>
+                    <a href="#contact" class="text-gray-600 hover:text-blue-600 transition-all-fast">Контакты</a>
                 </nav>
                 <div class="hidden lg:flex items-center space-x-4">
-                     <a href="tel:+375291234567" class="font-semibold text-gray-700 hover:text-cyan-600">+375 (29) 123-45-67</a>
-                    <a href="#calculator" class="bg-cyan-500 text-white px-5 py-2 rounded-full font-semibold hover:bg-cyan-600 transition-all-fast shadow-md">Заказать уборку</a>
+                     <a href="tel:+375291234567" class="font-semibold text-gray-700 hover:text-blue-600">+375 (29) 123-45-67</a>
+                    <a href="#calculator" class="bg-blue-500 text-white px-5 py-2 rounded-full font-semibold hover:bg-blue-600 transition-all-fast shadow-md">Заказать уборку</a>
                 </div>
                 <button id="mobile-menu-button" class="lg:hidden text-gray-700">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
@@ -59,13 +62,13 @@
             </div>
         </div>
         <div id="mobile-menu" class="hidden lg:hidden bg-white/90 backdrop-blur-md">
-            <a href="#services" class="block text-center py-3 px-4 text-gray-600 hover:bg-cyan-50 hover:text-cyan-600">Услуги и цены</a>
-            <a href="#process" class="block text-center py-3 px-4 text-gray-600 hover:bg-cyan-50 hover:text-cyan-600">Как мы работаем</a>
-            <a href="#calculator" class="block text-center py-3 px-4 text-gray-600 hover:bg-cyan-50 hover:text-cyan-600">Калькулятор</a>
-            <a href="#faq" class="block text-center py-3 px-4 text-gray-600 hover:bg-cyan-50 hover:text-cyan-600">FAQ</a>
-            <a href="#contact" class="block text-center py-3 px-4 text-gray-600 hover:bg-cyan-50 hover:text-cyan-600">Контакты</a>
+            <a href="#services" class="block text-center py-3 px-4 text-gray-600 hover:bg-blue-50 hover:text-blue-600">Услуги и цены</a>
+            <a href="#process" class="block text-center py-3 px-4 text-gray-600 hover:bg-blue-50 hover:text-blue-600">Как мы работаем</a>
+            <a href="#calculator" class="block text-center py-3 px-4 text-gray-600 hover:bg-blue-50 hover:text-blue-600">Калькулятор</a>
+            <a href="#faq" class="block text-center py-3 px-4 text-gray-600 hover:bg-blue-50 hover:text-blue-600">FAQ</a>
+            <a href="#contact" class="block text-center py-3 px-4 text-gray-600 hover:bg-blue-50 hover:text-blue-600">Контакты</a>
             <div class="p-4 border-t border-gray-200">
-                 <a href="#calculator" class="bg-cyan-500 w-full block text-center text-white px-5 py-3 rounded-full font-semibold hover:bg-cyan-600 transition-all-fast shadow-md">Заказать уборку</a>
+                 <a href="#calculator" class="bg-blue-500 w-full block text-center text-white px-5 py-3 rounded-full font-semibold hover:bg-blue-600 transition-all-fast shadow-md">Заказать уборку</a>
             </div>
         </div>
     </header>
@@ -75,8 +78,9 @@
             <div class="bg-black/50 min-h-[80vh] flex items-center">
                 <div class="container mx-auto px-4 text-center">
                     <h1 class="text-4xl md:text-6xl font-bold leading-tight mb-4">Профессиональная уборка квартир и домов в Минске</h1>
-                    <p class="text-lg md:text-xl text-gray-200 max-w-3xl mx-auto mb-8">Вернем вашей квартире сияющую чистоту, пока вы занимаетесь любимыми делами!</p>
-                    <a href="#calculator" class="bg-cyan-500 text-white px-10 py-4 rounded-full font-bold text-lg hover:bg-cyan-600 transition-all-fast shadow-lg">Рассчитать стоимость</a>
+                    <p class="text-lg md:text-xl text-gray-200 max-w-3xl mx-auto mb-4">Вернем вашей квартире сияющую чистоту, пока вы занимаетесь любимыми делами!</p>
+                    <p class="text-xl md:text-2xl font-semibold text-gray-100 max-w-3xl mx-auto mb-8">Идеально. Быстро. Надежно.</p>
+                    <a href="#calculator" class="bg-blue-500 text-white px-10 py-4 rounded-full font-bold text-lg hover:bg-blue-600 transition-all-fast shadow-lg">Рассчитать стоимость</a>
                     <div class="mt-12 grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto">
                         <div class="flex flex-col items-center">
                             <span class="text-3xl mb-2">✔️</span>
@@ -105,25 +109,25 @@
                 <p class="text-center text-gray-600 max-w-2xl mx-auto mb-12">Выберите подходящий тип уборки. Каждый из них можно дополнить опциями в калькуляторе ниже, чтобы создать идеальный пакет услуг именно для вас.</p>
                 <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
                     <div class="bg-gray-50 rounded-xl p-8 shadow-md hover:shadow-xl transition-all-fast flex flex-col">
-                        <div class="text-4xl text-cyan-500 mb-4">🧹</div>
+                        <div class="text-4xl text-blue-500 mb-4">🧹</div>
                         <h3 class="text-2xl font-bold mb-3">Поддерживающая уборка</h3>
                         <p class="text-gray-600 mb-4 flex-grow">Идеально для регулярного поддержания чистоты. Мы протираем пыль, моем полы, убираем санузел и кухню.</p>
                         <p class="text-2xl font-semibold mb-6">от 75 руб.</p>
-                        <a href="#calculator" data-service="support" class="mt-auto bg-white border border-cyan-500 text-cyan-500 px-6 py-3 rounded-full font-semibold hover:bg-cyan-500 hover:text-white transition-all-fast text-center">Выбрать</a>
+                        <a href="#calculator" data-service="support" class="mt-auto bg-white border border-blue-500 text-blue-500 px-6 py-3 rounded-full font-semibold hover:bg-blue-500 hover:text-white transition-all-fast text-center">Выбрать</a>
                     </div>
                     <div class="bg-gray-50 rounded-xl p-8 shadow-md hover:shadow-xl transition-all-fast flex flex-col">
-                         <div class="text-4xl text-cyan-500 mb-4">✨</div>
+                         <div class="text-4xl text-blue-500 mb-4">✨</div>
                         <h3 class="text-2xl font-bold mb-3">Генеральная уборка</h3>
                         <p class="text-gray-600 mb-4 flex-grow">Полная и глубокая очистка всего помещения. Моем окна, чистим мебель, удаляем сложные загрязнения.</p>
                         <p class="text-2xl font-semibold mb-6">от 150 руб.</p>
-                        <a href="#calculator" data-service="general" class="mt-auto bg-cyan-500 text-white px-6 py-3 rounded-full font-semibold hover:bg-cyan-600 transition-all-fast text-center shadow">Выбрать</a>
+                        <a href="#calculator" data-service="general" class="mt-auto bg-blue-500 text-white px-6 py-3 rounded-full font-semibold hover:bg-blue-600 transition-all-fast text-center shadow">Выбрать</a>
                     </div>
                     <div class="bg-gray-50 rounded-xl p-8 shadow-md hover:shadow-xl transition-all-fast flex flex-col">
-                        <div class="text-4xl text-cyan-500 mb-4">🏗️</div>
+                        <div class="text-4xl text-blue-500 mb-4">🏗️</div>
                         <h3 class="text-2xl font-bold mb-3">Уборка после ремонта</h3>
                         <p class="text-gray-600 mb-4 flex-grow">Удалим всю строительную пыль, остатки клея и краски. Подготовим вашу квартиру к комфортной жизни.</p>
                         <p class="text-2xl font-semibold mb-6">от 200 руб.</p>
-                         <a href="#calculator" data-service="repair" class="mt-auto bg-white border border-cyan-500 text-cyan-500 px-6 py-3 rounded-full font-semibold hover:bg-cyan-500 hover:text-white transition-all-fast text-center">Выбрать</a>
+                         <a href="#calculator" data-service="repair" class="mt-auto bg-white border border-blue-500 text-blue-500 px-6 py-3 rounded-full font-semibold hover:bg-blue-500 hover:text-white transition-all-fast text-center">Выбрать</a>
                     </div>
                 </div>
             </div>
@@ -134,22 +138,22 @@
                 <h2 class="text-3xl md:text-4xl font-bold text-center mb-12">Как мы работаем</h2>
                 <div class="max-w-4xl mx-auto grid md:grid-cols-4 gap-8 text-center">
                     <div class="flex flex-col items-center">
-                        <div class="bg-cyan-100 text-cyan-600 w-20 h-20 rounded-full flex items-center justify-center text-3xl font-bold mb-4">1</div>
+                        <div class="bg-blue-100 text-blue-600 w-20 h-20 rounded-full flex items-center justify-center text-3xl font-bold mb-4">1</div>
                         <h3 class="text-xl font-semibold mb-2">Заявка</h3>
                         <p class="text-gray-600">Вы оставляете заявку на сайте или звоните нам.</p>
                     </div>
                     <div class="flex flex-col items-center">
-                        <div class="bg-cyan-100 text-cyan-600 w-20 h-20 rounded-full flex items-center justify-center text-3xl font-bold mb-4">2</div>
+                        <div class="bg-blue-100 text-blue-600 w-20 h-20 rounded-full flex items-center justify-center text-3xl font-bold mb-4">2</div>
                         <h3 class="text-xl font-semibold mb-2">Согласование</h3>
                         <p class="text-gray-600">Мы уточняем детали и подтверждаем стоимость.</p>
                     </div>
                     <div class="flex flex-col items-center">
-                        <div class="bg-cyan-100 text-cyan-600 w-20 h-20 rounded-full flex items-center justify-center text-3xl font-bold mb-4">3</div>
+                        <div class="bg-blue-100 text-blue-600 w-20 h-20 rounded-full flex items-center justify-center text-3xl font-bold mb-4">3</div>
                         <h3 class="text-xl font-semibold mb-2">Уборка</h3>
                         <p class="text-gray-600">Наши клинеры приезжают и делают свою работу.</p>
                     </div>
                     <div class="flex flex-col items-center">
-                        <div class="bg-cyan-100 text-cyan-600 w-20 h-20 rounded-full flex items-center justify-center text-3xl font-bold mb-4">4</div>
+                        <div class="bg-blue-100 text-blue-600 w-20 h-20 rounded-full flex items-center justify-center text-3xl font-bold mb-4">4</div>
                         <h3 class="text-xl font-semibold mb-2">Оплата</h3>
                         <p class="text-gray-600">Вы принимаете работу и оплачиваете результат.</p>
                     </div>
@@ -168,16 +172,16 @@
                                 <div class="mb-8">
                                     <h4 class="text-xl font-semibold mb-4">1. Выберите тип уборки</h4>
                                     <div class="space-y-3">
-                                        <label class="flex items-center p-4 border rounded-lg cursor-pointer hover:border-cyan-500">
-                                            <input type="radio" name="serviceType" value="support" class="w-5 h-5 text-cyan-600" checked>
+                                        <label class="flex items-center p-4 border rounded-lg cursor-pointer hover:border-blue-500">
+                                            <input type="radio" name="serviceType" value="support" class="w-5 h-5 text-blue-600" checked>
                                             <span class="ml-4 text-lg">Поддерживающая</span>
                                         </label>
-                                        <label class="flex items-center p-4 border rounded-lg cursor-pointer hover:border-cyan-500">
-                                            <input type="radio" name="serviceType" value="general" class="w-5 h-5 text-cyan-600">
+                                        <label class="flex items-center p-4 border rounded-lg cursor-pointer hover:border-blue-500">
+                                            <input type="radio" name="serviceType" value="general" class="w-5 h-5 text-blue-600">
                                             <span class="ml-4 text-lg">Генеральная</span>
                                         </label>
-                                        <label class="flex items-center p-4 border rounded-lg cursor-pointer hover:border-cyan-500">
-                                            <input type="radio" name="serviceType" value="repair" class="w-5 h-5 text-cyan-600">
+                                        <label class="flex items-center p-4 border rounded-lg cursor-pointer hover:border-blue-500">
+                                            <input type="radio" name="serviceType" value="repair" class="w-5 h-5 text-blue-600">
                                             <span class="ml-4 text-lg">После ремонта</span>
                                         </label>
                                     </div>
@@ -186,20 +190,20 @@
                                 <div class="mb-8">
                                     <h4 class="text-xl font-semibold mb-4">2. Укажите количество комнат</h4>
                                     <div class="space-y-3">
-                                        <label class="flex items-center p-4 border rounded-lg cursor-pointer hover:border-cyan-500">
-                                            <input type="radio" name="rooms" value="1" class="w-5 h-5 text-cyan-600" checked>
+                                        <label class="flex items-center p-4 border rounded-lg cursor-pointer hover:border-blue-500">
+                                            <input type="radio" name="rooms" value="1" class="w-5 h-5 text-blue-600" checked>
                                             <span class="ml-4 text-lg">1 комната</span>
                                         </label>
-                                        <label class="flex items-center p-4 border rounded-lg cursor-pointer hover:border-cyan-500">
-                                            <input type="radio" name="rooms" value="2" class="w-5 h-5 text-cyan-600">
+                                        <label class="flex items-center p-4 border rounded-lg cursor-pointer hover:border-blue-500">
+                                            <input type="radio" name="rooms" value="2" class="w-5 h-5 text-blue-600">
                                             <span class="ml-4 text-lg">2 комнаты</span>
                                         </label>
-                                        <label class="flex items-center p-4 border rounded-lg cursor-pointer hover:border-cyan-500">
-                                            <input type="radio" name="rooms" value="3" class="w-5 h-5 text-cyan-600">
+                                        <label class="flex items-center p-4 border rounded-lg cursor-pointer hover:border-blue-500">
+                                            <input type="radio" name="rooms" value="3" class="w-5 h-5 text-blue-600">
                                             <span class="ml-4 text-lg">3 комнаты</span>
                                         </label>
-                                         <label class="flex items-center p-4 border rounded-lg cursor-pointer hover:border-cyan-500">
-                                            <input type="radio" name="rooms" value="4" class="w-5 h-5 text-cyan-600">
+                                         <label class="flex items-center p-4 border rounded-lg cursor-pointer hover:border-blue-500">
+                                            <input type="radio" name="rooms" value="4" class="w-5 h-5 text-blue-600">
                                             <span class="ml-4 text-lg">4+ комнаты</span>
                                         </label>
                                     </div>
@@ -210,35 +214,35 @@
                                 <div class="mb-8">
                                     <h4 class="text-xl font-semibold mb-4">3. Дополнительные услуги</h4>
                                     <div class="space-y-3">
-                                         <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:border-cyan-500">
-                                            <input type="checkbox" name="extras" value="windows" class="w-5 h-5 text-cyan-600 rounded">
+                                         <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:border-blue-500">
+                                            <input type="checkbox" name="extras" value="windows" class="w-5 h-5 text-blue-600 rounded">
                                             <span class="ml-4 flex-grow">Мытье окон</span>
                                             <span class="font-semibold">+ 30 руб.</span>
                                         </label>
-                                        <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:border-cyan-500">
-                                            <input type="checkbox" name="extras" value="fridge" class="w-5 h-5 text-cyan-600 rounded">
+                                        <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:border-blue-500">
+                                            <input type="checkbox" name="extras" value="fridge" class="w-5 h-5 text-blue-600 rounded">
                                             <span class="ml-4 flex-grow">Мытье холодильника</span>
                                             <span class="font-semibold">+ 20 руб.</span>
                                         </label>
-                                        <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:border-cyan-500">
-                                            <input type="checkbox" name="extras" value="oven" class="w-5 h-5 text-cyan-600 rounded">
+                                        <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:border-blue-500">
+                                            <input type="checkbox" name="extras" value="oven" class="w-5 h-5 text-blue-600 rounded">
                                             <span class="ml-4 flex-grow">Мытье духовки</span>
                                             <span class="font-semibold">+ 25 руб.</span>
                                         </label>
-                                         <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:border-cyan-500">
-                                            <input type="checkbox" name="extras" value="balcony" class="w-5 h-5 text-cyan-600 rounded">
+                                         <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:border-blue-500">
+                                            <input type="checkbox" name="extras" value="balcony" class="w-5 h-5 text-blue-600 rounded">
                                             <span class="ml-4 flex-grow">Уборка балкона</span>
                                             <span class="font-semibold">+ 35 руб.</span>
                                         </label>
                                     </div>
                                 </div>
                                 
-                                <div class="bg-cyan-50 p-6 rounded-lg text-center sticky top-24">
+                                <div class="bg-blue-50 p-6 rounded-lg text-center sticky top-24">
                                     <h4 class="text-lg font-semibold text-gray-700 mb-2">Примерная стоимость:</h4>
-                                    <p class="text-4xl md:text-5xl font-bold text-cyan-600 mb-4">
+                                    <p class="text-4xl md:text-5xl font-bold text-blue-600 mb-4">
                                         <span id="total-price">75</span> руб.
                                     </p>
-                                    <button type="submit" class="w-full bg-cyan-500 text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-cyan-600 transition-all-fast shadow-md">Оформить заказ</button>
+                                    <button type="submit" class="w-full bg-blue-500 text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-blue-600 transition-all-fast shadow-md">Оформить заказ</button>
                                 </div>
                             </div>
                         </div>
@@ -254,7 +258,7 @@
                     <div class="accordion-item bg-white rounded-lg shadow-sm">
                         <button class="accordion-header w-full flex justify-between items-center text-left p-5 font-semibold text-lg">
                             <span>Нужно ли мне быть дома во время уборки?</span>
-                            <span class="accordion-icon text-cyan-500 text-2xl transform transition-transform">+</span>
+                            <span class="accordion-icon text-blue-500 text-2xl transform transition-transform">+</span>
                         </button>
                         <div class="accordion-content">
                             <p class="p-5 pt-0 text-gray-600">Не обязательно. Вы можете оставить нам ключи, и мы выполним уборку в ваше отсутствие. Мы гарантируем сохранность вашего имущества.</p>
@@ -263,7 +267,7 @@
                      <div class="accordion-item bg-white rounded-lg shadow-sm">
                         <button class="accordion-header w-full flex justify-between items-center text-left p-5 font-semibold text-lg">
                             <span>Вы привозите свои чистящие средства?</span>
-                            <span class="accordion-icon text-cyan-500 text-2xl transform transition-transform">+</span>
+                            <span class="accordion-icon text-blue-500 text-2xl transform transition-transform">+</span>
                         </button>
                         <div class="accordion-content">
                             <p class="p-5 pt-0 text-gray-600">Да, мы используем собственные профессиональные и гипоаллергенные чистящие средства и оборудование. Вам не нужно ничего предоставлять.</p>
@@ -272,7 +276,7 @@
                      <div class="accordion-item bg-white rounded-lg shadow-sm">
                         <button class="accordion-header w-full flex justify-between items-center text-left p-5 font-semibold text-lg">
                             <span>Сколько времени занимает уборка?</span>
-                            <span class="accordion-icon text-cyan-500 text-2xl transform transition-transform">+</span>
+                            <span class="accordion-icon text-blue-500 text-2xl transform transition-transform">+</span>
                         </button>
                         <div class="accordion-content">
                             <p class="p-5 pt-0 text-gray-600">Время зависит от типа уборки и размера помещения. Поддерживающая уборка 1-комнатной квартиры занимает около 2-3 часов, генеральная — 5-7 часов.</p>
@@ -281,7 +285,7 @@
                      <div class="accordion-item bg-white rounded-lg shadow-sm">
                         <button class="accordion-header w-full flex justify-between items-center text-left p-5 font-semibold text-lg">
                             <span>Что если я недоволен качеством?</span>
-                            <span class="accordion-icon text-cyan-500 text-2xl transform transition-transform">+</span>
+                            <span class="accordion-icon text-blue-500 text-2xl transform transition-transform">+</span>
                         </button>
                         <div class="accordion-content">
                             <p class="p-5 pt-0 text-gray-600">Мы стремимся к идеальному результату. Если вы обнаружите недочеты, сообщите нам в течение 24 часов, и мы бесплатно все исправим.</p>
@@ -296,17 +300,25 @@
                 <h2 class="text-3xl font-bold mb-4">Остались вопросы?</h2>
                 <p class="text-gray-300 mb-8 max-w-xl mx-auto">Свяжитесь с нами любым удобным способом, и мы с радостью проконсультируем вас.</p>
                 <div class="flex flex-col md:flex-row justify-center items-center gap-8 mb-12">
-                     <a href="tel:+375291234567" class="text-2xl font-bold hover:text-cyan-400 transition-colors">📞 +375 (29) 123-45-67</a>
-                    <a href="mailto:info@cleaning-home.by" class="text-2xl font-bold hover:text-cyan-400 transition-colors">✉️ info@cleaning-home.by</a>
+                     <a href="tel:+375291234567" class="text-2xl font-bold hover:text-blue-400 transition-colors">📞 +375 (29) 123-45-67</a>
+                    <a href="mailto:info@primeclean.by" class="text-2xl font-bold hover:text-blue-400 transition-colors">✉️ info@primeclean.by</a>
                 </div>
                 <div class="border-t border-gray-700 pt-8 mt-8">
-                    <p>&copy; 2025 CleaningHome. Все права защищены.</p>
+                    <p>&copy; 2025 PRIME CLEAN. Все права защищены.</p>
                     <p class="text-sm text-gray-500 mt-2">г. Минск, ул. Примерная, д. 1</p>
                 </div>
             </div>
         </footer>
 
     </main>
+
+    <div id="success-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl p-8 max-w-sm w-full text-center transform transition-all scale-95 opacity-0" id="modal-content">
+            <h3 class="text-2xl font-bold text-blue-600 mb-4">Заказ принят!</h3>
+            <p class="text-gray-700 mb-6">Ваш заказ на сумму <span id="modal-price" class="font-bold"></span> руб. успешно оформлен. Наш менеджер скоро свяжется с вами.</p>
+            <button id="close-modal-button" class="w-full bg-blue-500 text-white px-6 py-3 rounded-full font-bold hover:bg-blue-600 transition-all-fast">Отлично!</button>
+        </div>
+    </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -366,14 +378,38 @@
 
             calculatorForm.addEventListener('change', calculatePrice);
             
+            const successModal = document.getElementById('success-modal');
+            const modalContent = document.getElementById('modal-content');
+            const closeModalButton = document.getElementById('close-modal-button');
+            const modalPriceEl = document.getElementById('modal-price');
+
             calculatorForm.addEventListener('submit', (e) => {
                 e.preventDefault();
-                alert(`Ваш заказ на сумму ${totalPriceEl.textContent} руб. принят! Наш менеджер скоро свяжется с вами.`);
+                modalPriceEl.textContent = totalPriceEl.textContent;
+                successModal.classList.remove('hidden');
+                setTimeout(() => {
+                    modalContent.classList.remove('scale-95', 'opacity-0');
+                    modalContent.classList.add('scale-100', 'opacity-100');
+                }, 10);
+            });
+            
+            const closeModal = () => {
+                modalContent.classList.add('scale-95', 'opacity-0');
+                setTimeout(() => {
+                    successModal.classList.add('hidden');
+                }, 200);
+            }
+
+            closeModalButton.addEventListener('click', closeModal);
+            successModal.addEventListener('click', (e) => {
+                if (e.target === successModal) {
+                    closeModal();
+                }
             });
 
             document.querySelectorAll('a[data-service]').forEach(link => {
                 link.addEventListener('click', (e) => {
-                    const service = e.target.getAttribute('data-service');
+                    const service = e.currentTarget.getAttribute('data-service');
                     if(service) {
                         const radio = document.querySelector(`input[name="serviceType"][value="${service}"]`);
                         if(radio) {
@@ -397,7 +433,6 @@
                     accordionItems.forEach(i => {
                         i.querySelector('.accordion-content').style.maxHeight = '0px';
                         i.querySelector('.accordion-icon').textContent = '+';
-                        i.querySelector('.accordion-icon').classList.remove('rotate-45');
                     });
                     
                     if (!isOpen) {
